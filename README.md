@@ -24,5 +24,3 @@ We are evolving the platform for nationals with custom BCBS electronics, a Teens
 - **CAD & prints:** STL, 3MF, and STEP files in `RoboCup Regionals 3D Models/` are ready for slicing or remixing.
 - **Posters & docs:** PDF/PNG/MD assets capture season summaries and can be used for outreach, judging, or team onboarding.
 
-## Suggested tags
-RoboCup, RoboCup Junior Soccer, EV3, Teensy, Arduino, Holonomic Drive, Omni Wheels, Kicker Mechanism, Pololu Motor, Compass Navigation, IR Seeker, KiCad, 3D Printing, PETG, Fusion 360
