@@ -1,8 +1,8 @@
-# VVS Ballers RoboCup Projects
+# K.A.D Ballers RoboCup Projects
 
 ## About
 
-VVS Ballers design, build, and iterate RoboCup Junior Soccer robots across multiple seasons.  
+K.A.D Ballers design, build, and iterate RoboCup Junior Soccer robots across multiple seasons.  
 This repository collects our full-season artifacts: CAD, EV3 programs, Arduino/Teensy firmware, electronics designs, and posters for regionals, nationals, and international events.
 
 We focus on:
