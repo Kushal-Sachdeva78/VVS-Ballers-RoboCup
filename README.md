@@ -152,8 +152,6 @@ They are useful for:
 
 ## Credits
 
-- **Team:** K.A.D Ballers – RoboCup Junior Soccer  
-
 We are grateful to our mentors, school, sponsors, and the RoboCup Junior community for support and inspiration.
 
 ---
