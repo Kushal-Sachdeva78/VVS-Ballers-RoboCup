@@ -1,4 +1,4 @@
-# K.A.D Ballers RoboCup Projects
+# VVS Ballers RoboCup Projects
 
 ## About
 
