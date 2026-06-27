@@ -1,0 +1,13 @@
+{
+    "autodeskProduct": "Fusion",
+    "type": "script",
+    "id": "c1a0d1e0-aud1-4t00-9000-claudeaudit1",
+    "author": "Claude",
+    "description": {
+        "": "Dump assembly structure to JSON for analysis"
+    },
+    "version": "1.0.0",
+    "runOnStartup": false,
+    "supportedOS": "windows|mac",
+    "editEnabled": true
+}

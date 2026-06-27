@@ -1,0 +1,17 @@
+# ============================================================================
+#  Git LFS — large binary CAD / fabrication assets
+#  Required because several Fusion archives exceed GitHub's 50 MB warning
+#  (and the largest are ~66 MB). Run `git lfs install` once before committing.
+# ============================================================================
+*.f3z  filter=lfs diff=lfs merge=lfs -text
+*.f3d  filter=lfs diff=lfs merge=lfs -text
+*.step filter=lfs diff=lfs merge=lfs -text
+*.stl  filter=lfs diff=lfs merge=lfs -text
+*.STL  filter=lfs diff=lfs merge=lfs -text
+*.3mf  filter=lfs diff=lfs merge=lfs -text
+*.zip  filter=lfs diff=lfs merge=lfs -text
+
+# Treat Gerbers and drill files as text (they diff cleanly and are small)
+*.gbr    text
+*.gbrjob text
+*.drl    text

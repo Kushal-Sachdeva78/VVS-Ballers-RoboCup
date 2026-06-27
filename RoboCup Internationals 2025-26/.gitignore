@@ -1,0 +1,36 @@
+# ---- Build / toolchain artifacts ----
+# PlatformIO build output (Teensy/Nano firmware is rebuilt from source)
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# Arduino build caches
+build/
+*.hex
+*.elf
+*.bin
+*.o
+*.a
+
+# ---- KiCad noise (keep sources: .kicad_pcb/.sch/.pro; ignore the rest) ----
+*-backups/
+*.kicad_prl
+_autosave-*
+fp-info-cache
+*.bak
+*-bak
+\#auto_saved_files#
+
+# KiCad local edit history (the VS Code "Local History" extension)
+.history/
+
+# ---- Editor / OS ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- Python (camera + Fusion helper scripts) ----
+__pycache__/
+*.pyc

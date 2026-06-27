@@ -1,0 +1,13 @@
+{
+    "autodeskProduct": "Fusion",
+    "type": "script",
+    "id": "c1a0d1e0-beam-4t00-9000-claudebeams01",
+    "author": "Claude",
+    "description": {
+        "": "Inspect geometry and build PCB connecting beams (Group A + Group B)"
+    },
+    "version": "1.0.0",
+    "runOnStartup": false,
+    "supportedOS": "windows|mac",
+    "editEnabled": true
+}

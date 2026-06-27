@@ -1,0 +1,10 @@
+{
+    "autodeskProduct": "Fusion360",
+    "type": "script",
+    "author": "Claude",
+    "description": {
+        "": "Center sensor turret, then build Group A L-beams + Group B posts with matching screw holes; verify clearances; export f3z."
+    },
+    "supportedOS": "windows|mac",
+    "editEnabled": true
+}
