@@ -176,16 +176,6 @@ Full byte-level layouts are in [How the robot works](docs/HOW_IT_WORKS.md).
 Our thanks to **Amazon · DLF · Havells · OpenMV · Magnum Ventures · Budtree
 Management** for supporting the team.
 
-## Credits & references
-
-- **Rules:** [RoboCupJunior Soccer Rules 2026](https://robocup-junior.github.io/soccer-rules/master/rules.html)
-  and [scoring / award rubrics](https://robocup-junior.github.io/soccer-rules/master/scoring.html).
-- **IR ball:** [robocup-junior/ir-golf-ball](https://github.com/robocup-junior/ir-golf-ball).
-- **Communication module:** [robocup-junior/soccer-communication-module](https://github.com/robocup-junior/soccer-communication-module).
-- The IR-ring algorithm and camera vision build on ideas openly shared by other RCJ
-  teams (Aegis, Crestwood Lions, Hyperion, AIR, chaBots, Reset); see the in-code
-  headers for per-file attribution, as the rules require.
-
 ## License
 
 Released under the [MIT License](LICENSE) © 2026 VVS Ballers. You're welcome to
