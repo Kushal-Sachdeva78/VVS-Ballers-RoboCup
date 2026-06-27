@@ -7,7 +7,7 @@
 <p align="center">
   Two fully autonomous robots — an <b>attacker</b> and a <b>defender</b> — for the
   <b>RoboCupJunior Soccer Infrared</b> (formerly Lightweight) league.<br>
-  Firmware · multi-board electronics (KiCad) · mechanical design (Fusion 360).
+  Firmware(C++) · multi-board electronics (KiCad) · mechanical design (Fusion 360).
 </p>
 
 ---
