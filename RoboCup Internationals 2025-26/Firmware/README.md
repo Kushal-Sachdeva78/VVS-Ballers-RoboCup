@@ -25,6 +25,7 @@ each subsystem and the inter-board protocols.
 | `Motor_Current/Motor_Current_Supervisor` | Nano Every (optional) | watchdog | stall-timer over-current protection |
 | `Motor_Current/Motor_Current_Limit_1A` | Nano Every (optional) | watchdog | simple per-motor 1 A chop |
 | `Comms/RobotLink` | Main (Teensy 4.1) + nRF24L01+ | optional link | inter-robot 2.4 GHz role switching — survivor covers the goal ([`Comms/README.md`](Comms/README.md)) |
+| `RobotMain` | Main (Teensy 4.1) + nRF24L01+ | combined build | one flash that runs attacker OR defender live via RobotLink ([`RobotMain/README.md`](RobotMain/README.md)) |
 
 Superseded no-line versions live in [`../Legacy/Firmware`](../Legacy/Firmware).
 
