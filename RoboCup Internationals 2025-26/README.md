@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/images/vvs-ballers-logo.jpeg" alt="VVS Ballers" width="220">
+  <img src="Docs/Images/VVS_Ballers_Logo.jpeg" alt="VVS Ballers" width="220">
 </p>
 
 <h1 align="center">VVS Ballers — RoboCupJunior Soccer (Internationals 2025-26)</h1>
@@ -25,7 +25,7 @@ green field with white boundary lines. A goal is scored when the ball touches th
 **back wall of the goal**; touching a wall or driving fully into the marked
 penalty area is an **out-of-bounds penalty**. Every design decision here
 is made against those facts — score in the goal, never cross the line, stay legal.
-(See [How the robot works](docs/HOW_IT_WORKS.md) for the full technical write-up.)
+(See [How the robot works](Docs/HOW_IT_WORKS.md) for the full technical write-up.)
 
 > **2026 ball note:** the Soccer Infrared league switched to the new 42 mm
 > open-source [IR golf ball](https://github.com/robocup-junior/ir-golf-ball) — the
@@ -48,7 +48,7 @@ the main board differs.
 | | Attacker | Defender (goalkeeper) |
 |---|---|---|
 | Job | Win the ball, aim, and shoot the open corner | Hold the goal mouth and clear the ball |
-| Main firmware | `firmware/attacker/attacker_chase_aim_kick_line` | `firmware/defender/Defender_Full` |
+| Main firmware | `Firmware/Attacker/Attacker_Chase_Aim_Kick_Line` | `Firmware/Defender/Defender_Full` |
 | Ball | IR ring (16 sensors) | IR ring |
 | Staying in bounds | **Line ring + ultrasonic fused** boundary escape | **Line** keeps it on the goal-area ("D") line; ultrasonic cross-check |
 | Goal / aim | OpenMV camera → open-corner bearing | (camera optional) |
@@ -62,16 +62,16 @@ the fast sensor loops off the main control CPU.
 
 | Board | MCU | Does | KiCad | Firmware |
 |---|---|---|---|---|
-| **Main** | Teensy 4.1 | Drive (4× DRV8263H), BNO055 IMU, capture sensor, kicker relay, all links | `pcb/main` | `firmware/attacker`, `firmware/defender` |
-| **IR ring** | Teensy 4.1 | 16× TSSP58038 → ball bearing & distance | `pcb/ir` | `firmware/ir-ball-sensor` |
-| **Line ring** | Teensy 4.1 | 4× QTR-MD-05A (18 ch) → white-line detection | `pcb/line` | `firmware/line-sensor` |
-| **Ultrasonic** | Arduino Nano Every | 4× HC-SR04 → wall distances | `pcb/ultrasonic` | `firmware/ultrasonic` |
-| **Camera** | OpenMV H7 | Goal / keeper / open-corner vision | — | `firmware/camera` |
-| **Power** | — | 12 V / 5 V / 3.3 V rails + 48 V solenoid boost | `pcb/power` | — |
-| **Motor-current** (optional) | Arduino Nano Every | DRV8263H stall / over-current watchdog | — | `firmware/motor-current` |
+| **Main** | Teensy 4.1 | Drive (4× DRV8263H), BNO055 IMU, capture sensor, kicker relay, all links | `PCB/Main` | `Firmware/Attacker`, `Firmware/Defender` |
+| **IR ring** | Teensy 4.1 | 16× TSSP58038 → ball bearing & distance | `PCB/IR` | `Firmware/IR_Ball_Sensor` |
+| **Line ring** | Teensy 4.1 | 4× QTR-MD-05A (18 ch) → white-line detection | `PCB/Line` | `Firmware/Line_Sensor` |
+| **Ultrasonic** | Arduino Nano Every | 4× HC-SR04 → wall distances | `PCB/Ultrasonic` | `Firmware/Ultrasonic` |
+| **Camera** | OpenMV H7 | Goal / keeper / open-corner vision | — | `Firmware/Camera` |
+| **Power** | — | 12 V / 5 V / 3.3 V rails + 48 V solenoid boost | `PCB/Power` | — |
+| **Motor-current** (optional) | Arduino Nano Every | DRV8263H stall / over-current watchdog | — | `Firmware/Motor_Current` |
 
-Wiring for every board is in **[`pcb/wiring/`](pcb/wiring)** (one PDF per board) and
-explained in [How the robot works](docs/HOW_IT_WORKS.md).
+Wiring for every board is in **[`PCB/Wiring/`](PCB/Wiring)** (one PDF per board) and
+explained in [How the robot works](Docs/HOW_IT_WORKS.md).
 
 ## How it plays — design choices vs. the game
 
@@ -118,27 +118,28 @@ Soccer match:
 ```
 RoboCup Internationals 2025-26/
 ├─ README.md                  ← you are here
-├─ docs/
+├─ Docs/
 │  ├─ HOW_IT_WORKS.md         ← full technical deep-dive
 │  ├─ MAPPING.md              ← original → new file/folder mapping
-│  └─ images/
-├─ firmware/                  ← all microcontroller code
-│  ├─ attacker/               ← main-board attacker (current: …_line)
-│  ├─ defender/               ← main-board goalkeeper (Defender_Full)
-│  ├─ ir-ball-sensor/         ← IR ring (Code2_Calibrated = flight build)
-│  ├─ line-sensor/            ← QTR line ring (detect / baseline / raw)
-│  ├─ ultrasonic/             ← Nano Every HC-SR04 board + main-board parser
-│  ├─ camera/                 ← OpenMV H7 goal vision (MicroPython)
-│  ├─ motor-current/          ← optional over-current watchdog
+│  └─ Images/
+├─ Firmware/                  ← all microcontroller code
+│  ├─ Attacker/               ← main-board attacker (current: …_Line)
+│  ├─ Defender/               ← main-board goalkeeper (Defender_Full)
+│  ├─ IR_Ball_Sensor/         ← IR ring (Code2_Calibrated = flight build)
+│  ├─ Line_Sensor/            ← QTR line ring (Detect / Baseline / Raw)
+│  ├─ Ultrasonic/             ← Nano Every HC-SR04 board + main-board parser
+│  ├─ Camera/                 ← OpenMV H7 goal vision (MicroPython)
+│  ├─ Motor_Current/          ← optional over-current watchdog
 │  └─ README.md
-├─ pcb/                       ← KiCad sources, Gerbers, wiring PDFs, fab zips
-│  ├─ main/ ir/ line/ ultrasonic/ power/
-│  ├─ wiring/   ← human-readable wiring per board (PDF)
-│  ├─ fab/      ← ready-to-order Gerber zips
+├─ PCB/                       ← KiCad sources, Gerbers, wiring PDFs, fab zips
+│  ├─ Main/ IR/ Line/ Ultrasonic/ Power/
+│  ├─ Wiring/        ← human-readable wiring per board (PDF)
+│  ├─ Fabrication/   ← ready-to-order Gerber zips
 │  └─ README.md
-├─ cad/                       ← Fusion 360 sources + printable STLs
-│  ├─ fusion/  print/   └─ README.md
-└─ legacy/                    ← superseded designs, kept for history (see legacy/README.md)
+├─ CAD/                       ← Fusion 360 sources + printable STLs
+│  ├─ Fusion/   Printable/{Chassis, Drive, Ball_Capture, Sensor_Mounts}
+│  └─ README.md
+└─ Legacy/                    ← superseded designs, kept for history (see Legacy/README.md)
 ```
 
 ## Build & flash
@@ -154,7 +155,7 @@ All boards build in the **Arduino IDE** (each sketch folder is named to match it
 | Line ring | Teensy 4.1 | none |
 | Ultrasonic | Arduino Nano Every (megaAVR) | none; *Registers emulation → None (ATMEGA4809)* |
 | Motor-current | Arduino Nano Every | none |
-| Camera | OpenMV H7 | save `goal_cam.py` to the H7 flash as `main.py` |
+| Camera | OpenMV H7 | save `Goal_Cam.py` to the H7 flash as `main.py` |
 
 PlatformIO example: `pio run -e teensy41 -t upload` (Teensy) or
 `pio run -e nano_every -t upload` (Nano).
@@ -169,7 +170,7 @@ identical **CRC-8 (poly 0x07)**, so the main board can reject any corrupted fram
 - **Line → Main** (Serial8): 9-byte frame, per-side white-line bitmask + counts.
 - **Camera → Main** (Serial2): 9-byte frame, goal/keeper flags + bearings + open-corner angle.
 
-Full byte-level layouts are in [How the robot works](docs/HOW_IT_WORKS.md).
+Full byte-level layouts are in [How the robot works](Docs/HOW_IT_WORKS.md).
 
 ## Sponsors
 
