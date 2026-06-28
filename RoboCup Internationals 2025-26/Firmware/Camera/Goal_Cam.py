@@ -7,7 +7,9 @@
 #   and the line sensor gives you OUT. So this camera does the one job nothing
 #   else on the robot can do: find the GOAL, tell the Teensy which way to turn
 #   to face it, how far it is, and which CORNER is OPEN to shoot at (dodging the
-#   keeper). It does NOT track the ball — that stays on your IR sensor.
+#   keeper). It does NOT chase the ball (the IR ring stays your PRIMARY ball
+#   sensor), but it ALSO detects the orange ball and SENDS its bearing so the main
+#   board can run a short-range camera+IR fusion. See the wire protocol below.
 #
 #  REFERENCE PATTERNS (RCJ 2025 TDPs/repos this is built from)
 #   - Crestwood Lions : bearing = (cx - center) * (FOV / width)        [goal aim]
@@ -23,17 +25,20 @@
 #     OpenMV GND     ---- Teensy GND  (REQUIRED, common ground)
 #   Power the H7 from your regulated 3V3/5V rail as in your current build.
 #
-#  WIRE PROTOCOL  (fixed 9-byte frame, little logic on the camera)
-#   byte 0 : 0xAA  header
-#   byte 1 : 0x55  header
-#   byte 2 : flags  bit0 attackGoalSeen | bit1 ownGoalSeen | bit2 keeperSeen
-#   byte 3 : attackBearing   int8  deg, +right of robot's forward axis
-#   byte 4 : attackDist      uint8 coarse cm (255 = far/unknown)
-#   byte 5 : openCornerBear  int8  deg  <-- THE angle to aim your kick at
-#   byte 6 : keeperBearing   int8  deg  (valid only if bit2 set)
-#   byte 7 : ownGoalBearing  int8  deg  (handy for orientation/defense)
-#   byte 8 : checksum        (sum of bytes 2..7) & 0xFF
-#   Teensy: wait for 0xAA,0x55 -> read 6 payload bytes + checksum -> verify.
+#  WIRE PROTOCOL  (fixed 11-byte frame, little logic on the camera)
+#   byte 0  : 0xAA  header
+#   byte 1  : 0x55  header
+#   byte 2  : flags  bit0 attackGoalSeen | bit1 ownGoalSeen | bit2 keeperSeen
+#                    | bit3 ballSeen
+#   byte 3  : attackBearing   int8  deg, +right of robot's forward axis
+#   byte 4  : attackDist      uint8 coarse cm (255 = far/unknown)
+#   byte 5  : openCornerBear  int8  deg  <-- THE angle to aim your kick at
+#   byte 6  : keeperBearing   int8  deg  (valid only if bit2 set)
+#   byte 7  : ownGoalBearing  int8  deg  (handy for orientation/defense)
+#   byte 8  : ballBearing     int8  deg, +right (valid only if bit3 set)
+#   byte 9  : ballDist        uint8 coarse cm (255 = far/unknown)
+#   byte 10 : checksum        (sum of bytes 2..9) & 0xFF
+#   Teensy: wait for 0xAA,0x55 -> read 8 payload bytes + checksum -> verify.
 #
 #  TO RUN ON BOOT: save this file onto the OpenMV flash as  main.py
 # ============================================================================
@@ -48,6 +53,7 @@ from pyb import UART, LED
 # ----------------------------------------------------------------------------
 DEBUG       = True          # True: draw + print FPS in the IDE. False for matches (faster).
 USE_KEEPER  = True          # detect a dark robot in front of the goal and aim around it
+DETECT_BALL = True          # also find the orange ball and SEND its bearing (camera+IR fusion)
 ATTACK_GOAL = "yellow"      # which goal you attack this side: "yellow" or "blue"
 
 # --- LAB colour thresholds  (L_min,L_max, A_min,A_max, B_min,B_max) ---
@@ -56,6 +62,9 @@ ATTACK_GOAL = "yellow"      # which goal you attack this side: "yellow" or "blue
 YELLOW = (52, 84, -7, 33, 40, 81)   # yellow goal: high L, strong +B
 BLUE   = (20,  75, -25,  35, -70, -10)   # blue goal:   strong -B
 DARK   = ( 0,  35, -20,  20, -20,  20)   # opponent/keeper body (dark)
+ORANGE = (8, 66, 13, 46, 69, 0)          # orange ball: bright, +A (red) AND strong +B (yellow)
+                                         # GOTCHA: the YELLOW goal also has strong +B; if the goal
+                                         # reads as the ball, push A_min UP until they separate.
 
 # --- camera geometry ---
 HFOV_DEG    = 70.0          # H7 stock-lens horizontal FOV (~70 deg). Refine by test.
@@ -66,9 +75,14 @@ GOAL_WIDTH_CM = 45.0        # real goal width — set from the CURRENT rulebook
 FOCAL_PX      = 250.0       # CALIBRATE: place robot dist D cm away, read printed
                             # goal width W px, then FOCAL_PX = W * D / GOAL_WIDTH_CM
 
+# --- ball distance (same focal method; drives the camera+IR SHORT-RANGE fusion) ---
+BALL_WIDTH_CM = 4.2         # 2026 RCJ IR golf ball diameter (42 mm)
+BALL_FOCAL_PX = 250.0       # CALIBRATE like FOCAL_PX but with the ball blob width px
+
 # --- blob gating / aiming ---
 GOAL_MIN_PIXELS = 50        # ignore goal blobs smaller than this (noise)
 KEEPER_MIN_PIXELS = 60      # ignore tiny dark blobs
+BALL_MIN_PIXELS = 30        # ignore orange blobs smaller than this (noise)
 INSET        = 0.18         # aim this fraction of goal-width inside the chosen corner
 FACE_MARGIN  = 25           # px: only pick a corner once the goal is ~in front of us
 MIN_OPEN_PX  = 14           # an "open" gap beside the keeper must be at least this wide
@@ -108,9 +122,10 @@ def bearing_px(x):
     """Image x -> bearing in degrees. +ve means the target is to the ROBOT'S RIGHT."""
     return (x - IMG_CX) * DEG_PER_PX
 
-def largest_blob(img, thr):
-    blobs = img.find_blobs([thr], pixels_threshold=GOAL_MIN_PIXELS,
-                           area_threshold=GOAL_MIN_PIXELS, merge=True, margin=10)
+def largest_blob(img, thr, min_px=GOAL_MIN_PIXELS):
+    """Biggest blob matching thr, or None. min_px lets the ball use its own gate."""
+    blobs = img.find_blobs([thr], pixels_threshold=min_px,
+                           area_threshold=min_px, merge=True, margin=10)
     return max(blobs, key=lambda b: b.pixels()) if blobs else None
 
 def find_keeper(img, goal):
@@ -130,6 +145,11 @@ def goal_distance_cm(width_px):
     if width_px <= 0:
         return 255
     return (GOAL_WIDTH_CM * FOCAL_PX) / width_px
+
+def ball_distance_cm(width_px):
+    if width_px <= 0:
+        return 255
+    return (BALL_WIDTH_CM * BALL_FOCAL_PX) / width_px
 
 def open_corner_bearing(goal, keeper):
     """Angle to aim the kick: the OPEN corner (the one we're not aligned with, or the
@@ -171,8 +191,9 @@ def u8(v):
     v = int(round(v))
     return 255 if v > 255 else (0 if v < 0 else v)
 
-def send_frame(flags, a_bear, a_dist, open_bear, k_bear, o_bear):
-    payload = [flags & 0xFF, s8(a_bear), u8(a_dist), s8(open_bear), s8(k_bear), s8(o_bear)]
+def send_frame(flags, a_bear, a_dist, open_bear, k_bear, o_bear, ball_bear, ball_dist):
+    payload = [flags & 0xFF, s8(a_bear), u8(a_dist), s8(open_bear), s8(k_bear), s8(o_bear),
+               s8(ball_bear), u8(ball_dist)]
     chk = sum(payload) & 0xFF
     uart.write(bytes([HDR0, HDR1] + payload + [chk]))
 
@@ -186,10 +207,15 @@ while True:
     attack = largest_blob(img, ATTACK_THR)
     own    = largest_blob(img, OWN_THR)
     keeper = find_keeper(img, attack) if USE_KEEPER else None
+    ball   = largest_blob(img, ORANGE, BALL_MIN_PIXELS) if DETECT_BALL else None
 
     attack_seen = attack is not None
     own_seen    = own    is not None
     keeper_seen = keeper is not None
+    ball_seen   = ball   is not None
+    # ball bearing: +ve = ball is to the ROBOT'S RIGHT (same convention as the goal)
+    ball_bear   = bearing_px(ball.cx())      if ball_seen else 0
+    ball_dist   = ball_distance_cm(ball.w()) if ball_seen else 255
 
     if attack_seen:
         a_bear    = bearing_px(attack.cx())
@@ -203,8 +229,9 @@ while True:
     k_bear = bearing_px(keeper.cx()) if keeper_seen else 0
     o_bear = bearing_px(own.cx())    if own_seen    else 0
 
-    flags = (0x01 if attack_seen else 0) | (0x02 if own_seen else 0) | (0x04 if keeper_seen else 0)
-    send_frame(flags, a_bear, a_dist, open_bear, k_bear, o_bear)
+    flags = ((0x01 if attack_seen else 0) | (0x02 if own_seen else 0) |
+             (0x04 if keeper_seen else 0) | (0x08 if ball_seen else 0))
+    send_frame(flags, a_bear, a_dist, open_bear, k_bear, o_bear, ball_bear, ball_dist)
 
     # ---- IDE debug overlay (turn DEBUG off for matches) -------------------
     if DEBUG:
@@ -218,8 +245,11 @@ while True:
             img.draw_rectangle(own.rect(), color=(0, 128, 255))
         if keeper_seen:
             img.draw_rectangle(keeper.rect(), color=(255, 0, 0))
-        print("fps=%.0f seen=%d aBear=%.1f open=%.1f dist=%.0f keeper=%d" %
-              (clock.fps(), attack_seen, a_bear, open_bear, a_dist, keeper_seen))
+        if ball_seen:
+            img.draw_rectangle(ball.rect(), color=(255, 128, 0))
+            img.draw_line(int(IMG_CX), IMG_H, ball.cx(), ball.cy(), color=(255, 128, 0), thickness=2)
+        print("fps=%.0f seen=%d aBear=%.1f open=%.1f dist=%.0f keeper=%d ball=%d bBear=%.1f" %
+              (clock.fps(), attack_seen, a_bear, open_bear, a_dist, keeper_seen, ball_seen, ball_bear))
 
 # ============================================================================
 #  OPTIONAL UPGRADES (left out to keep the base clean)

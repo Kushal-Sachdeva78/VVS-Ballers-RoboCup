@@ -5,16 +5,18 @@
 // ============================================================================
 //  Defender_Full / config.h  -  defender knobs + the Line PCB contract.
 //
-//  The Line PCB (Serial8) is the PRIMARY box-keeper: line-depth = standoff,
-//  line-side = lateral/corner limits. The ultrasonics are demoted to cross-check
-//  + RECOVER homing.
+//  Sensor roles: the BACK ULTRASONIC is the continuous box standoff (depth PID);
+//  the LINE ring (Serial8, 9-byte A5/5A mask frame) marks the box EDGES - the
+//  FRONT board flags the up-field box line (up-field limit) and the RIGHT/LEFT
+//  boards flag the side lines (corner limits). Ultrasonics also centre laterally
+//  and home in RECOVER.
 //
 //  >>> BENCH-VERIFY the sign fix-points: IR_DIR_INVERT, the US enum (in the
-//      .ino), and the Line side/arm convention (LINE_* below + linePoll()).
+//      .ino), and the Line board->direction mapping (LN_*_BIT + linePoll()).
 // ============================================================================
 
 // ---- feature flags (all default OFF; the sketch runs with none of them) ----
-#define USE_CAMERA 0          // OpenMV goal cam on Serial1 (9-byte AA 55 frame)
+#define USE_CAMERA 0          // OpenMV goal cam on Serial1 (11-byte AA 55 frame)
 #define USE_COMMS  0          // GO/STOP referee inputs on A12/A13
 #define USE_OLED   0          // SSD1306 status mirror on Wire (pins 18/19)
 
@@ -27,7 +29,7 @@
 #define KD_LAT 0.15f
 #define LATERAL_MAX_VX 255
 
-// ---- Depth PID: output vy. Input is LINE depth (primary) or back standoff (fallback) ----
+// ---- Depth PID: output vy. Input = back-ultrasonic standoff (the continuous datum) ----
 #define KP_DEPTH 1.20f
 #define KI_DEPTH 0.0f
 #define KD_DEPTH 0.10f
@@ -63,32 +65,27 @@
 #define RECOVER_TIMEOUT_MS 1200
 
 // ============================================================================
-//  LINE PCB CONTRACT  (Serial8)  -  8-byte little-endian CRC frame (matches the
-//  ultrasonic link's framing style):
+//  LINE PCB CONTRACT  (Serial8)  -  9-byte A5/5A mask frame, byte-identical to
+//  the one the attacker decodes (one shared line link across both robots):
 //
-//    [0]=0xAA [1]=0x55 | depthLo depthHi | side | flags | seq | crc8
-//      depth : uint16 LE, MILLIMETRES, distance from the robot to the up-field
-//              box line. 0xFFFF (LINE_NO_LINE) = no line in view.
-//      side  : int8, DEGREES, bearing of the nearest line segment (+ = RIGHT).
-//      flags : bit0 Front arm, bit1 Right, bit2 Back, bit3 Left, on the line.
+//    [0]=0xA5 [1]=0x5A [2]=mask [3..6]=count[0..3] [7]=seq [8]=crc8 over [2..7]
+//      mask  : bit0 RIGHT, bit1 FRONT, bit2 LEFT, bit3 BACK (board "sees line").
+//      count : per-board white-channel count (diagnostics only).
 //      seq   : uint8 packet counter (gaps => dropped packets).
-//      crc8  : poly 0x07, init 0x00, over the 5 payload bytes [2..6] - the SAME
+//      crc8  : poly 0x07, init 0x00, over the 6 payload bytes [2..7] - the SAME
 //              algorithm as the ultrasonic link, so us_crc8() is reused as-is.
 //
-//  A Line Teensy emitting this contract must send exactly this frame at 115200.
-//  If anything changes (units, sentinel, byte order), update linePoll() and the
-//  constants below together - they are the single source of truth here.
+//  The keeper uses the FRONT flag (up-field box line) and RIGHT/LEFT flags (side
+//  lines) as hard edge limits; the back ultrasonic gives the continuous standoff.
+//  The bit order lives in the .ino (LN_*_BIT) and MUST match the Line encoder.
 // ============================================================================
-#define LINE_DEPTH_SETPOINT 120   // hold this many mm back from the up-field box line
 #define LINE_BAUD           115200
 #define LINE_STALE_MS       200   // no good frame this long -> distrust the line
-#define LINE_NO_LINE        0xFFFF
-#define LINE_SIDE_DEADBAND  25    // deg; |side| beyond this counts as a box edge
-// Safety cross-check (line measures the FRONT line, the back US measures the
-// OWN-goal wall - different datums, so we don't compare them directly). Instead:
-// regardless of what the line says, never drive toward the own goal (vy < 0)
-// when the back ultrasonic shows the own-goal wall closer than this. Stops a bad
-// line reading from reversing the keeper into its own net.
+// Safety cross-check (the line marks the FRONT/side box lines, the back US measures
+// the OWN-goal wall - different datums, so we don't compare them directly). Instead:
+// regardless of what the line says, never drive toward the own goal (vy < 0) when the
+// back ultrasonic shows the own-goal wall closer than this. Stops a bad reading from
+// reversing the keeper into its own net.
 #define BACK_WALL_SAFE_MM   90
 
 // ---- camera (optional, Serial1, default OFF) ----

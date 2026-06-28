@@ -49,6 +49,17 @@ is rejected rather than acted on.
 
 ---
 
+### Block diagram & parts list
+
+A wiring-level block diagram of the whole electronics stack:
+
+![VVS Ballers electronics block diagram](VVS_Ballers_Electronics_Block_Diagram.png)
+
+The complete bill of materials (every board, sensor, driver, and the kicker) is in
+[`VVS_Ballers_BOM.xlsx`](VVS_Ballers_BOM.xlsx).
+
+---
+
 ## 2. Power and electrical
 
 From [`PCB/Wiring/Power_PCB.pdf`](../PCB/Wiring/Power_PCB.pdf) and
@@ -237,9 +248,14 @@ the largest **dark** blob overlapping it (the keeper), then computes:
   the **far corner**, inset slightly so the ball still goes in.
 - `attackDist` (coarse, focal-length method), `keeperBearing`, `ownGoalBearing`.
 
-`Goal_Cam_Ball.py` is the same program plus an **orange-ball overlay** for diagnostics
-(camera + IR corroboration); it sends the *same* 9-byte frame, so the main parser is
-unchanged. Save `Goal_Cam.py` to the H7 as `main.py` to run on boot.
+**Camera + IR ball fusion.** Both `Goal_Cam.py` and `Goal_Cam_Ball.py` also detect the
+orange ball and put its bearing + coarse distance in the frame (flags bit3 +
+`ballBearing` + `ballDist`, §5.2). The **IR ring stays the primary ball sensor**; the
+main board treats the camera ball as a **short-range cross-check and fallback** — if
+the IR ring loses the ball the attacker chases the camera ball, and within
+`CAM_BALL_NEAR_CM` (~25 cm) a large camera-vs-IR disagreement makes it trust the camera
+bearing (`USE_CAM_BALL_FUSION`; attacker `camPoll` + fusion block). `Goal_Cam_Ball.py`
+adds a richer ball overlay for tuning. Save the chosen script to the H7 as `main.py`.
 
 > **Wiring note:** the IR PCB exposes a camera header on pins 34/35 from an earlier
 > plan, but the **current firmware reads the camera on the main board's Serial2**
@@ -256,11 +272,12 @@ consecutive in-range pings the ball is "captured" and the kicker can arm (§6, �
 ## 5. Inter-board communication
 
 Three of the four links are short **binary frames** that share one design: a 2-byte
-sync header, a little-endian payload, a sequence counter, and an identical
-**CRC-8 (polynomial 0x07, init 0x00)**. The CRC lets the main board throw away any
-corrupted or partial frame, and the sync bytes differ between links so a mis-wire
-can't false-lock one stream onto another. A per-link **stale timeout (~200 ms)** means
-frozen or dead data is never acted on.
+sync header, a little-endian payload, and an integrity byte, with the sync bytes
+differing between links so a mis-wire can't false-lock one stream onto another. The
+**ultrasonic and line** links use an identical **CRC-8 (polynomial 0x07, init 0x00)**;
+the lighter **camera** link uses a **modular sum-check** (it carries no
+safety-critical distances). A per-link **stale timeout (~200 ms)** means frozen or
+dead data is never acted on, and the **IR** link (§5.4) is plain ASCII.
 
 ### 5.1 Ultrasonic → Main (Serial3, 13 bytes)
 
@@ -271,13 +288,14 @@ frozen or dead data is never acted on.
   crc8:      over payload bytes [2..11]
 ```
 
-### 5.2 Camera → Main (Serial2, 9 bytes)
+### 5.2 Camera → Main (Serial2, 11 bytes)
 
 ```
 [0]=0xAA [1]=0x55 [2]=flags [3]=attackBearing(i8) [4]=attackDist(u8)
-[5]=openCornerBear(i8) [6]=keeperBearing(i8) [7]=ownGoalBearing(i8) [8]=checksum
-  flags: bit0 attackGoalSeen, bit1 ownGoalSeen, bit2 keeperSeen
-  checksum: (sum of bytes 2..7) & 0xFF
+[5]=openCornerBear(i8) [6]=keeperBearing(i8) [7]=ownGoalBearing(i8)
+[8]=ballBearing(i8) [9]=ballDist(u8) [10]=checksum
+  flags: bit0 attackGoalSeen, bit1 ownGoalSeen, bit2 keeperSeen, bit3 ballSeen
+  checksum: (sum of bytes 2..9) & 0xFF
 ```
 
 ### 5.3 Line → Main (Serial8, 9 bytes)
@@ -297,13 +315,12 @@ The `0xA5/0x5A` sync is deliberately different from the ultrasonic link's
 `500` means "no ball". The distance field is parsed for sync but ignored (see the IR
 distance caveat in §4.1).
 
-> **Known contract mismatch (documented, not a bug to hide):** the goalkeeper sketch
-> `Defender_Full` was written against a *different, planned* line frame — an 8-byte
-> `depth + side` frame — that the current line firmware does **not** emit (the line
-> boards emit the 9-byte mask/counts frame above). Its header says as much: the
-> producing firmware "is not written yet." The attacker's fused boundary escape uses
-> the real 9-byte frame and is the proven path. See §7 and `legacy`/notes before
-> relying on the defender's line-depth behaviour.
+> **Both robots now decode the same line frame.** `Defender_Full` was previously
+> written against a *planned* 8-byte depth/side frame the line boards never emitted; it
+> now decodes the **same 9-byte mask/counts frame** above. The keeper uses the FRONT
+> flag as the up-field box-edge limit and the RIGHT/LEFT flags as corner limits, with
+> the **back ultrasonic** providing the continuous standoff (a reflectance ring has no
+> continuous distance). The attacker's fused boundary escape uses the same frame.
 
 ---
 
@@ -368,21 +385,21 @@ camera); the default match build requires the goal to be seen and aligned.
 - **RECOVER** — re-home depth and re-centre, then → GUARD (or on timeout).
 
 **Staying on "the D".** No robot may be *fully* inside the penalty area, so the keeper
-must ride the **edge** of the goal area, not sit in it. In the intended design the
-**line** is the primary reference: line-depth holds the keeper a set distance back
-from the up-field box line (`LINE_DEPTH_SETPOINT = 120 mm`) and line-side marks the
-lateral/corner limits, with the ultrasonics demoted to centring, a **back-wall safety
-cross-check** (never reverse into the own goal when the back wall is < 90 mm), and
-RECOVER homing. A holonomic mixer with output normalisation keeps motion smooth, and
-the keeper relaxes its heading when stationary so it doesn't creep on gyro drift.
+rides the **edge** of the goal area rather than sitting in it. The **back ultrasonic**
+gives the continuous standoff (the depth-PID datum), while the **line ring** marks the
+box edges: the FRONT board flags the up-field box line so the keeper does not drift
+up-field past it, and the RIGHT/LEFT boards flag the side lines as corner limits. A
+reflectance ring has no continuous distance, which is exactly why depth comes from the
+ultrasonic and the line only hard-stops at the edges. A **back-wall safety cross-check**
+never reverses into the own goal when the back wall is < 90 mm, a holonomic mixer with
+output normalisation keeps motion smooth, and the keeper relaxes its heading when
+stationary so it doesn't creep on gyro drift.
 
 The clearing kicker is a four-phase machine tuned shorter than the attacker's:
 `K_READY → K_ARMING (250 ms) → K_FIRING (100 ms) → K_COOLDOWN (2000 ms)`.
 
-> As noted in §5.4, the line-depth path in `Defender_Full` targets a planned 8-byte
-> line frame the current line firmware doesn't emit. The **ultrasonic** keeper logic
-> and the state machine are complete; reconcile the line frame (or use the no-line
-> keeper in `Legacy/`) before depending on line-depth standoff in a match.
+> `Defender_Full` shares the attacker's proven 9-byte line decoder, so the keeper's line
+> edge limits use the same board→direction mapping as the attacker's fused escape.
 
 ---
 
@@ -439,7 +456,7 @@ The constants most worth knowing, by file:
 | `KICK_AIM_TOL_DEG` | 5° | attacker — kick only when open corner is this aligned |
 | `CAPTURE_BALL_MM` | 45 mm | capture mouth "ball present" |
 | `KICK_MS` / cooldown / max-on | 500 / 1500 / 600 ms | attacker kicker |
-| `LINE_DEPTH_SETPOINT` | 120 mm | defender — standoff from the box line |
+| `BACK_STANDOFF_MM` | 220 mm | defender — back-ultrasonic standoff (depth datum) |
 | `KP_LAT` / `KP_DEPTH` | 3.0 / 1.2 | defender lateral / depth PIDs |
 | IR detect on/off | 60 / 35 | IR hysteresis |
 | IR `NOISE_FLOOR` | 12 | IR ambient rejection |
@@ -452,8 +469,9 @@ The constants most worth knowing, by file:
 
 1. **IR distance is not calibrated** — the ring saturates; use bearing + detected
    only (§4.1).
-2. **Defender line frame mismatch** — `Defender_Full` expects an 8-byte depth/side
-   line frame the current line firmware doesn't emit (§5.4, §7).
+2. **Defender line frame** — `Defender_Full` decodes the same 9-byte mask frame the line
+   boards emit (the old 8-byte depth contract is gone). Depth/standoff is the back
+   ultrasonic; the line marks the box edges (§5.4, §7).
 3. **Camera is read on the main board's Serial2**, not the IR-board header on pins
    34/35 (§4.4).
 4. **Motor-current watchdog needs a board mod** — it only works if each DRV8263H's
@@ -461,6 +479,10 @@ The constants most worth knowing, by file:
 5. **Level-shift the ultrasonic TX** into the 3.3 V Teensy RX (§4.2).
 6. **The ultrasonic side enum is robot-specific** (board mounted 180°); fix it in one
    place if the board is re-seated.
+7. **Roles are assigned at flash time** — the attacker and defender are the same robot
+   with different main-board firmware. There is **no inter-robot radio link**; the only
+   "comms module" is the referee GO/STOP on A12/A13. Automatic partner role-switching
+   (e.g. "promote to defender if the partner drops out") is **not** implemented.
 
 ---
 

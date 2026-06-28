@@ -27,19 +27,24 @@
 #     OpenMV GND     ---- Teensy GND  (REQUIRED, common ground)
 #   Power the H7 from your regulated 3V3/5V rail as in your current build.
 #
-#  WIRE PROTOCOL  (fixed 9-byte frame, little logic on the camera)
-#   byte 0 : 0xAA  header
-#   byte 1 : 0x55  header
-#   byte 2 : flags  bit0 attackGoalSeen | bit1 ownGoalSeen | bit2 keeperSeen
-#   byte 3 : attackBearing   int8  deg, +right of robot's forward axis
-#   byte 4 : attackDist      uint8 coarse cm (255 = far/unknown)
-#   byte 5 : openCornerBear  int8  deg  <-- THE angle to aim your kick at
-#   byte 6 : keeperBearing   int8  deg  (valid only if bit2 set)
-#   byte 7 : ownGoalBearing  int8  deg  (handy for orientation/defense)
-#   byte 8 : checksum        (sum of bytes 2..7) & 0xFF
-#   Teensy: wait for 0xAA,0x55 -> read 6 payload bytes + checksum -> verify.
-#   NOTE: orange-ball detection below is OVERLAY-ONLY and does NOT touch this
-#   frame, so your current Teensy parser keeps working unchanged.
+#  WIRE PROTOCOL  (fixed 11-byte frame, little logic on the camera)
+#   byte 0  : 0xAA  header
+#   byte 1  : 0x55  header
+#   byte 2  : flags  bit0 attackGoalSeen | bit1 ownGoalSeen | bit2 keeperSeen
+#                    | bit3 ballSeen
+#   byte 3  : attackBearing   int8  deg, +right of robot's forward axis
+#   byte 4  : attackDist      uint8 coarse cm (255 = far/unknown)
+#   byte 5  : openCornerBear  int8  deg  <-- THE angle to aim your kick at
+#   byte 6  : keeperBearing   int8  deg  (valid only if bit2 set)
+#   byte 7  : ownGoalBearing  int8  deg  (handy for orientation/defense)
+#   byte 8  : ballBearing     int8  deg, +right (valid only if bit3 set)
+#   byte 9  : ballDist        uint8 coarse cm (255 = far/unknown)
+#   byte 10 : checksum        (sum of bytes 2..9) & 0xFF
+#   Teensy: wait for 0xAA,0x55 -> read 8 payload bytes + checksum -> verify.
+#   NOTE: the orange ball is now SENT on the wire (camera+IR fusion). The main
+#   firmware keeps the IR ring as PRIMARY and uses this ball as a short-range
+#   cross-check / fallback. Flash this camera + the main board together (the
+#   frame length changed from the old 9-byte version).
 #
 #  TO RUN ON BOOT: save this file onto the OpenMV flash as  main.py
 # ============================================================================
@@ -76,6 +81,10 @@ EXPOSURE_US = 8000          # locked exposure. Raise if dark / lower if washed o
 GOAL_WIDTH_CM = 45.0        # real goal width — set from the CURRENT rulebook
 FOCAL_PX      = 250.0       # CALIBRATE: place robot dist D cm away, read printed
                             # goal width W px, then FOCAL_PX = W * D / GOAL_WIDTH_CM
+
+# --- ball distance (same focal method; drives the camera+IR SHORT-RANGE fusion) ---
+BALL_WIDTH_CM = 4.2         # 2026 RCJ IR golf ball diameter (42 mm)
+BALL_FOCAL_PX = 250.0       # CALIBRATE like FOCAL_PX but with the ball blob width px
 
 # --- blob gating / aiming ---
 GOAL_MIN_PIXELS = 50        # ignore goal blobs smaller than this (noise)
@@ -144,6 +153,11 @@ def goal_distance_cm(width_px):
         return 255
     return (GOAL_WIDTH_CM * FOCAL_PX) / width_px
 
+def ball_distance_cm(width_px):
+    if width_px <= 0:
+        return 255
+    return (BALL_WIDTH_CM * BALL_FOCAL_PX) / width_px
+
 def open_corner_bearing(goal, keeper):
     """Angle to aim the kick: the OPEN corner (the one we're not aligned with, or the
     side the keeper isn't covering). Built from AIR/chaBots/Reset."""
@@ -184,8 +198,9 @@ def u8(v):
     v = int(round(v))
     return 255 if v > 255 else (0 if v < 0 else v)
 
-def send_frame(flags, a_bear, a_dist, open_bear, k_bear, o_bear):
-    payload = [flags & 0xFF, s8(a_bear), u8(a_dist), s8(open_bear), s8(k_bear), s8(o_bear)]
+def send_frame(flags, a_bear, a_dist, open_bear, k_bear, o_bear, ball_bear, ball_dist):
+    payload = [flags & 0xFF, s8(a_bear), u8(a_dist), s8(open_bear), s8(k_bear), s8(o_bear),
+               s8(ball_bear), u8(ball_dist)]
     chk = sum(payload) & 0xFF
     uart.write(bytes([HDR0, HDR1] + payload + [chk]))
 
@@ -206,7 +221,8 @@ while True:
     keeper_seen = keeper is not None
     ball_seen   = ball   is not None
     # ball bearing: +ve = ball is to the ROBOT'S RIGHT (same convention as the goal)
-    ball_bear   = bearing_px(ball.cx()) if ball_seen else 0
+    ball_bear   = bearing_px(ball.cx())      if ball_seen else 0
+    ball_dist   = ball_distance_cm(ball.w()) if ball_seen else 255
 
     if attack_seen:
         a_bear    = bearing_px(attack.cx())
@@ -220,8 +236,9 @@ while True:
     k_bear = bearing_px(keeper.cx()) if keeper_seen else 0
     o_bear = bearing_px(own.cx())    if own_seen    else 0
 
-    flags = (0x01 if attack_seen else 0) | (0x02 if own_seen else 0) | (0x04 if keeper_seen else 0)
-    send_frame(flags, a_bear, a_dist, open_bear, k_bear, o_bear)
+    flags = ((0x01 if attack_seen else 0) | (0x02 if own_seen else 0) |
+             (0x04 if keeper_seen else 0) | (0x08 if ball_seen else 0))
+    send_frame(flags, a_bear, a_dist, open_bear, k_bear, o_bear, ball_bear, ball_dist)
 
     # ---- IDE debug overlay (turn DEBUG off for matches) -------------------
     if DEBUG:
@@ -254,11 +271,10 @@ while True:
 #   - Boot toggle of ATTACK_GOAL with the USR button: from pyb import Switch.
 #   - Replace separate find_blobs calls with one call + .code() for a small FPS gain
 #     (Hyperion) once your thresholds are locked.
-#   - Ball over UART (camera+IR fusion): the camera already computes `ball_bear`. To
-#     consume it on the Teensy, add a "ball seen" bit to `flags` (e.g. bit3) and an int8
-#     ball-bearing byte to `send_frame`, then EXTEND the checksum range and the Teensy
-#     parser to match the new length. Left OFF by default so this file stays drop-in
-#     compatible with your current 9-byte parser, with the IR ring still primary.
+#   - Ball over UART (camera+IR fusion): IMPLEMENTED here. `flags` bit3 = ballSeen, plus
+#     int8 ballBearing + uint8 ballDist in `send_frame` (11-byte frame). The main board
+#     keeps the IR ring PRIMARY and uses this ball as a short-range cross-check/fallback.
+#     Flash this camera and the main board together (the parser length changed).
 #  FALLBACK WHEN THE GOAL LEAVES FRAME: that's the Teensy's job — hold the last
 #  good heading on the BNO055 (Crestwood/Hyperion/Lovbot Legends all do this) and
 #  let the IR ring keep you on the ball.

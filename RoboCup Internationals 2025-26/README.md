@@ -71,7 +71,9 @@ the fast sensor loops off the main control CPU.
 | **Motor-current** (optional) | Arduino Nano Every | DRV8263H stall / over-current watchdog | — | `Firmware/Motor_Current` |
 
 Wiring for every board is in **[`PCB/Wiring/`](PCB/Wiring)** (one PDF per board) and
-explained in [How the robot works](Docs/HOW_IT_WORKS.md).
+explained in [How the robot works](Docs/HOW_IT_WORKS.md). A whole-robot
+[electronics block diagram](Docs/VVS_Ballers_Electronics_Block_Diagram.png) and the
+full [bill of materials](Docs/VVS_Ballers_BOM.xlsx) live in `Docs/`.
 
 ## How it plays — design choices vs. the game
 
@@ -121,6 +123,8 @@ RoboCup Internationals 2025-26/
 ├─ Docs/
 │  ├─ HOW_IT_WORKS.md         ← full technical deep-dive
 │  ├─ MAPPING.md              ← original → new file/folder mapping
+│  ├─ VVS_Ballers_BOM.xlsx    ← bill of materials
+│  ├─ VVS_Ballers_Electronics_Block_Diagram.png
 │  └─ Images/
 ├─ Firmware/                  ← all microcontroller code
 │  ├─ Attacker/               ← main-board attacker (current: …_Line)

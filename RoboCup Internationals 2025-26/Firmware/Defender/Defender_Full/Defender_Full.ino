@@ -2,21 +2,26 @@
   ============================================================================
   DEFENDER (goalkeeper) - FULL (with Line PCB)  -  Main Teensy 4.1
   ----------------------------------------------------------------------------
-  Goalkeeper with the LINE PCB (Serial8) as the PRIMARY box-keeper:
-     line-depth -> standoff (depth PID input)
-     line-side  -> lateral / corner limits
-  The ultrasonics handle lateral centring (the line only marks edges, not centre),
-  a back-wall safety cross-check, and RECOVER homing when the line is lost.
+  Goalkeeper that rides the edge of the goal area ("the D"). Sensor roles:
+     back ultrasonic  -> CONTINUOUS standoff (depth PID input)
+     line ring (Serial8) -> box-EDGE limits: the FRONT board flags the up-field
+                            box line (don't drift up-field past it); RIGHT/LEFT
+                            boards flag the side lines (corner limits).
+  A reflectance ring can only tell you a board is OVER the line, not a continuous
+  distance, so the ULTRASONIC (not the line) gives the smooth standoff while the
+  line hard-stops the keeper at the box edges. The ultrasonics also centre the
+  keeper laterally, give a back-wall safety cross-check, and home it in RECOVER.
 
-  The Line receiver is a single non-blocking linePoll() (8-byte AA 55 CRC frame;
-  see config.h LINE_* and the parser below).
+  The Line receiver decodes the SAME non-blocking 9-byte A5 5A mask/counts frame
+  the attacker decodes (see config.h LINE_* and linePoll() below) - one shared
+  line contract across both robots.
 
   BUILD: Arduino IDE, Tools > Board > Teensy 4.1, USB Type "Serial". Libraries:
          Adafruit BNO055 + Adafruit Unified Sensor (and SSD1306+GFX iff USE_OLED).
 
   Wiring adds, over the NoLine build:
-    Line PCB : Serial8 (RX8 = pin 34 <- Line board TX). 115200, 8-byte CRC frame.
-               (If the Line Teensy TX is 3.3V, no shifter is needed into pin 34.)
+    Line PCB : Serial8 (RX8 = pin 34 <- Line board TX7/pin 29). 115200, 9-byte
+               A5/5A mask frame. (Line Teensy TX is 3.3V -> no shifter into pin 34.)
   ============================================================================
 */
 
@@ -265,34 +270,33 @@ void updateKicker() {
 // ----------------------------------------------------------------------------
 
 // ============================================================================
-//  LINE PCB RECEIVER  (Serial8).
-//  NOTE: this expects an 8-byte depth/side frame. The current Line PCB firmware
-//  emits a different 9-byte mask/counts frame (see firmware/line-sensor), so this
-//  depth/side contract is not yet produced. linePoll() + the LINE_* constants in
-//  config.h are the single place to edit if the frame changes.
-//
-//  8-byte frame, little-endian, CRC-protected (reuses us_crc8):
-//    [0]=0xAA [1]=0x55 | depthLo depthHi | side | flags | seq | crc8
-//      depth = uint16 mm to the up-field box line (0xFFFF = LINE_NO_LINE)
-//      side  = int8 deg, bearing of the nearest line (+ = line is to the RIGHT)
-//      flags = bit0 F | bit1 R | bit2 B | bit3 L arm on the line
-//      crc8  = poly 0x07 over payload bytes [2..6]
+//  LINE PCB RECEIVER  (Serial8, 9-byte A5/5A mask frame).
+//  This decodes the SAME contract the attacker decodes (one shared line link):
+//    [0]=0xA5 [1]=0x5A [2]=mask [3..6]=count[0..3] [7]=seq [8]=crc8 over [2..7]
+//  mask bits (board order, MUST match the encoder in Firmware/Line_Sensor):
+//    bit0 = QTR1/RIGHT  bit1 = QTR2/FRONT  bit2 = QTR3/LEFT  bit3 = QTR4/BACK
+//  The keeper uses FRONT (the up-field box line: don't advance past it) and
+//  RIGHT/LEFT (the side lines: corner limits). CRC-8 reuses us_crc8() so encoder
+//  and decoder stay symmetric. Sync A5/5A is distinct from the US link's AA/55,
+//  so a mis-wire can't false-sync one stream onto the other.
 // ============================================================================
 #define LINE_PORT  Serial8
-#define LINE_SYNC0 0xAA
-#define LINE_SYNC1 0x55
+#define LINE_SYNC0 0xA5
+#define LINE_SYNC1 0x5A
+
+// QTR board -> robot direction (CONFIRMED). Bit positions MUST match the encoder.
+enum { LN_RIGHT_BIT = 0, LN_FRONT_BIT = 1, LN_LEFT_BIT = 2, LN_BACK_BIT = 3 };
 
 struct LineData {
-  uint16_t depthMm;       // dist to up-field line, mm; LINE_NO_LINE = none
-  int16_t  sideDeg;       // bearing of nearest line, deg (+right)
-  uint8_t  arms;          // bit0 F, bit1 R, bit2 B, bit3 L
+  uint8_t  mask;          // bitmask of boards currently seeing the line
+  uint8_t  count[4];      // white-sensor count per board (R,F,L,B) -- diagnostics
   uint8_t  seq;
   uint32_t lastUpdateMs;
 };
-LineData line = { LINE_NO_LINE, 0, 0, 0, 0 };
+LineData line = { 0, { 0, 0, 0, 0 }, 0, 0 };
 
 bool linePoll(Stream &port) {
-  static uint8_t buf[8];
+  static uint8_t buf[9];
   static uint8_t idx = 0;
   bool got = false;
   while (port.available()) {
@@ -301,13 +305,15 @@ bool linePoll(Stream &port) {
     else if (idx == 1) { if (b == LINE_SYNC1) buf[idx++] = b; else idx = 0; }
     else {
       buf[idx++] = b;
-      if (idx >= 8) {
+      if (idx >= 9) {
         idx = 0;
-        if (us_crc8(&buf[2], 5) == buf[7]) {   // CRC over payload [2..6]
-          line.depthMm = (uint16_t)buf[2] | ((uint16_t)buf[3] << 8);
-          line.sideDeg = (int8_t)buf[4];
-          line.arms    = buf[5];
-          line.seq     = buf[6];
+        if (us_crc8(&buf[2], 6) == buf[8]) {   // SAME crc8 as the ultrasonic link
+          line.mask     = buf[2];
+          line.count[0] = buf[3];
+          line.count[1] = buf[4];
+          line.count[2] = buf[5];
+          line.count[3] = buf[6];
+          line.seq      = buf[7];
           line.lastUpdateMs = millis();
           got = true;
         }
@@ -317,8 +323,12 @@ bool linePoll(Stream &port) {
   }
   return got;
 }
-bool lineStale()    { return (millis() - line.lastUpdateMs) > LINE_STALE_MS; }
-bool lineSeesLine() { return !lineStale() && line.depthMm != LINE_NO_LINE; }
+bool lineStale() { return (millis() - line.lastUpdateMs) > LINE_STALE_MS; }
+// Edge helpers gate on !lineStale(): a stale line never clamps (safe US-only fallback).
+bool lineFront() { return !lineStale() && (line.mask & (1 << LN_FRONT_BIT)); }
+bool lineRight() { return !lineStale() && (line.mask & (1 << LN_RIGHT_BIT)); }
+bool lineLeft()  { return !lineStale() && (line.mask & (1 << LN_LEFT_BIT)); }
+bool lineBack()  { return !lineStale() && (line.mask & (1 << LN_BACK_BIT)); }
 // ============================ end Line PCB ===================================
 
 // ---------------------------------------------------------------------------
@@ -372,27 +382,24 @@ int depthPID(float err, float dt) {
 bool usValid(uint8_t i) { return !ultrasonicStale() && us.status[i] == US_ST_OK; }
 int  backStandoffErr()  { return BACK_STANDOFF_MM - (int)us.mm[US_BACK]; }
 
-// ---- DEPTH SOURCE (Full): LINE primary, back-ultrasonic fallback -----------
+// ---- DEPTH SOURCE (Full): back-ultrasonic standoff -------------------------
+//  The standoff is CONTINUOUS, so it comes from the back ultrasonic, not the line
+//  (a reflectance ring has no continuous distance - it only flags being over a
+//  line; the front line is handled as a hard up-field limit in frontLineGuard()).
 //  Sign convention (vy < 0 == toward own goal):
-//   line  : err = depthMm - LINE_DEPTH_SETPOINT. depth small (too far up-field,
-//           close to the line) -> err<0 -> vy<0 (back). depth large -> vy>0.
-//   us    : err = BACK_STANDOFF_MM - us.mm[US_BACK]  (own-goal-wall datum).
-//  *src is set to 'L'/'U'/'-' for the debug stream.
+//   us : err = BACK_STANDOFF_MM - us.mm[US_BACK]  (own-goal-wall datum).
+//  *src is set to 'U'/'-' for the debug stream.
 int depthErr(char* src, float dt) {
-  if (lineSeesLine())   { *src = 'L'; return (int)line.depthMm - LINE_DEPTH_SETPOINT; }
   if (usValid(US_BACK)) { *src = 'U'; return backStandoffErr(); }
   *src = '-'; return 0;
 }
 
-// ---- LATERAL LIMITS (Full): LINE corners primary, ultrasonic cross-check ----
+// ---- LATERAL LIMITS (Full): LINE side boards = corner limits, US cross-check --
 int clampLateralByLine(int vx) {
-  if (lineStale()) return vx;
-  bool rightEdge = (line.arms & 0x02) ||
-                   (lineSeesLine() && line.sideDeg >  LINE_SIDE_DEADBAND);
-  bool leftEdge  = (line.arms & 0x08) ||
-                   (lineSeesLine() && line.sideDeg < -LINE_SIDE_DEADBAND);
-  if (vx > 0 && rightEdge) vx = 0;   // line on the right edge -> don't slide right
-  if (vx < 0 && leftEdge)  vx = 0;
+  // RIGHT/LEFT line boards mark the side box lines: don't slide toward a side whose
+  // board is on the line. (lineRight()/lineLeft() already gate on !lineStale().)
+  if (vx > 0 && lineRight()) vx = 0;   // line on the right edge -> don't slide right
+  if (vx < 0 && lineLeft())  vx = 0;   // line on the left edge  -> don't slide left
   return vx;
 }
 int clampLateralByUS(int vx) {
@@ -405,6 +412,15 @@ int clampLateral(int vx) { return clampLateralByUS(clampLateralByLine(vx)); }
 // Back-wall safety cross-check: never reverse into the own goal on a bad reading.
 int backWallGuard(int vy) {
   if (vy < 0 && usValid(US_BACK) && us.mm[US_BACK] < BACK_WALL_SAFE_MM) vy = 0;
+  return vy;
+}
+
+// Up-field box-edge limit: the FRONT line board marks the up-field box line. Keep the
+// keeper from drifting up-field out of position by clamping up-field motion (vy > 0)
+// to 0 whenever the front board is on the line. (CLEAR pushes out deliberately and is
+// intentionally NOT routed through this guard.)
+int frontLineGuard(int vy) {
+  if (vy > 0 && lineFront()) vy = 0;
   return vy;
 }
 
@@ -431,36 +447,44 @@ float bearingRate(float bearing, unsigned long now) {
 // --------------------------------- camera -----------------------------------
 #if USE_CAMERA
 struct CamData {
-  bool    attackSeen, ownSeen, keeperSeen;
+  bool    attackSeen, ownSeen, keeperSeen, ballSeen;
   int8_t  attackBearing;
   uint8_t attackDist;
   int8_t  openCornerBear;
   int8_t  keeperBearing;
   int8_t  ownGoalBearing;
+  int8_t  ballBearing;       // camera ball (unused by the keeper; parsed for protocol parity)
+  uint8_t ballDist;
   uint32_t lastMs;
 };
-CamData cam = {false,false,false,0,255,0,0,0,0};
+CamData cam = {false,false,false,false,0,255,0,0,0,0,255,0};
 
+// 11-byte AA/55 frame, identical to the attacker's camPoll (see Goal_Cam.py). The
+// keeper only uses the goal/keeper fields; the ball fields are parsed for parity so
+// the same camera build feeds either robot.
 void cameraPoll() {
-  static uint8_t buf[9]; static uint8_t idx = 0;
+  static uint8_t buf[11]; static uint8_t idx = 0;
   while (CAM_PORT.available()) {
     uint8_t b = (uint8_t)CAM_PORT.read();
     if (idx == 0)      { if (b == 0xAA) buf[idx++] = b; }
     else if (idx == 1) { if (b == 0x55) buf[idx++] = b; else idx = 0; }
     else {
       buf[idx++] = b;
-      if (idx >= 9) {
+      if (idx >= 11) {
         idx = 0;
-        uint8_t sum = (uint8_t)(buf[2]+buf[3]+buf[4]+buf[5]+buf[6]+buf[7]);
-        if (sum == buf[8]) {
+        uint8_t sum = (uint8_t)(buf[2]+buf[3]+buf[4]+buf[5]+buf[6]+buf[7]+buf[8]+buf[9]);
+        if (sum == buf[10]) {
           cam.attackSeen    = buf[2] & 0x01;
           cam.ownSeen       = buf[2] & 0x02;
           cam.keeperSeen    = buf[2] & 0x04;
+          cam.ballSeen      = buf[2] & 0x08;
           cam.attackBearing = (int8_t)buf[3];
           cam.attackDist    = buf[4];
           cam.openCornerBear= (int8_t)buf[5];
           cam.keeperBearing = (int8_t)buf[6];
           cam.ownGoalBearing= (int8_t)buf[7];
+          cam.ballBearing   = (int8_t)buf[8];
+          cam.ballDist      = buf[9];
           cam.lastMs = millis();
         }
       }
@@ -498,8 +522,8 @@ void oledShow(const char* st, float dir, int vx, int vy, float corr, char dsrc) 
   oled.setTextSize(1); oled.setTextColor(SSD1306_WHITE); oled.setCursor(0,0);
   oled.print(st); oled.print(g_ballSeen ? " *" : "  ");
   oled.print(" dir="); oled.println(dir, 0);
-  oled.print("ln="); if (lineSeesLine()) oled.print(line.depthMm); else oled.print("--");
-  oled.print("/"); oled.print(line.sideDeg);
+  oled.print("LN["); oled.print(lineRight()?"R":"-"); oled.print(lineFront()?"F":"-");
+  oled.print(lineLeft()?"L":"-"); oled.print(lineBack()?"B":"-"); oled.print("]");
   oled.print(" B="); oled.println(us.mm[US_BACK]);
   oled.print("cap="); oled.print(g_captureMm); oled.print(" k="); oled.println((int)g_kick);
   oled.print("vx="); oled.print(vx); oled.print(" vy="); oled.print(vy);
@@ -628,7 +652,7 @@ void loop() {
   switch (state) {
     case ST_GUARD:
       vx = centerVx();
-      vy = backWallGuard(depthPID((float)depthErr(&dsrc, dt), dt));
+      vy = frontLineGuard(backWallGuard(depthPID((float)depthErr(&dsrc, dt), dt)));
       if (g_ballSeen) { state = ST_TRACK; resetLat(); resetBearingRate(); }
       break;
 
@@ -636,7 +660,7 @@ void loop() {
       float rate = bearingRate(dir, now);
       float gscale = (fabs(rate) > INTERCEPT_RATE_DPS) ? INTERCEPT_BOOST : 1.0f;
       vx = clampLateral(lateralPID(dir, dt, gscale));
-      vy = backWallGuard(depthPID((float)depthErr(&dsrc, dt), dt));
+      vy = frontLineGuard(backWallGuard(depthPID((float)depthErr(&dsrc, dt), dt)));
       if (ballInCaptureZone())      { state = ST_CLEAR; stateTs = now; }
       else if (!g_ballSeen)         { state = ST_GUARD; resetDepth(); }
       break;
@@ -658,10 +682,8 @@ void loop() {
       // Re-home with whatever depth source is alive (line preferred, US fallback)
       // and re-centre on the ultrasonics; re-assert heading via the corr term.
       vx = centerVx();
-      vy = backWallGuard(depthPID((float)depthErr(&dsrc, dt), dt));
-      bool depthHomed = (dsrc == 'L') ? (abs((int)line.depthMm - LINE_DEPTH_SETPOINT) < RECOVER_TOL_MM)
-                       : (dsrc == 'U') ? (abs(backStandoffErr()) < RECOVER_TOL_MM)
-                       : false;
+      vy = frontLineGuard(backWallGuard(depthPID((float)depthErr(&dsrc, dt), dt)));
+      bool depthHomed = (dsrc == 'U') ? (abs(backStandoffErr()) < RECOVER_TOL_MM) : false;
       bool centred = (!usValid(US_RIGHT) || !usValid(US_LEFT) ||
                       abs((int)us.mm[US_RIGHT] - (int)us.mm[US_LEFT]) < RECOVER_TOL_MM * 2);
       if ((depthHomed && centred) || (now - stateTs) > RECOVER_TIMEOUT_MS) { state = ST_GUARD; }
@@ -696,9 +718,14 @@ void loop() {
     Serial.print("ball="); Serial.print(g_ballSeen ? "Y" : "n");
     Serial.print(" dir=");  Serial.print(dir, 1);
     Serial.print(lineStale() ? "  LN(stale)" : "  LN");
-    Serial.print(" d="); if (lineSeesLine()) Serial.print(line.depthMm); else Serial.print("--");
-    Serial.print(" s="); Serial.print(line.sideDeg);
-    Serial.print(" a="); Serial.print(line.arms, BIN);
+    Serial.print("[");
+    Serial.print((line.mask & (1 << LN_RIGHT_BIT)) ? "R" : "-");
+    Serial.print((line.mask & (1 << LN_FRONT_BIT)) ? "F" : "-");
+    Serial.print((line.mask & (1 << LN_LEFT_BIT))  ? "L" : "-");
+    Serial.print((line.mask & (1 << LN_BACK_BIT))  ? "B" : "-");
+    Serial.print("] cnt=");
+    Serial.print(line.count[0]); Serial.print('/'); Serial.print(line.count[1]); Serial.print('/');
+    Serial.print(line.count[2]); Serial.print('/'); Serial.print(line.count[3]);
     Serial.print(ultrasonicStale() ? "  US(stale)" : "  US");
     Serial.print(" F="); Serial.print(us.mm[US_FRONT]);
     Serial.print(" R="); Serial.print(us.mm[US_RIGHT]);

@@ -96,6 +96,16 @@ enum TopState { ST_IDLE = 0, ST_CHASE = 1, ST_AVOID = 2, ST_AIM = 3 };
 const unsigned long CAM_STALE_MS = 200;     // no valid cam frame this long -> "goal not seen"
 const int KICK_AIM_TOL_DEG = 5;             // fire only when |openCornerBear| <= this (deg)
 
+// ---- Camera + IR ball fusion (the IR ring stays PRIMARY) ----
+// The camera also reports the orange ball (flags bit3 + ballBearing + ballDist). The
+// IR ring is the primary ball sensor; the camera ball is a SHORT-RANGE cross-check and
+// a fallback when the IR ring drops the ball. The camera bearing is "+right, 0=front";
+// the IR `dir` uses this robot's reversed convention (a ball AHEAD reads near +/-180),
+// so the camera ball is mapped into that convention before it is compared/used.
+#define   USE_CAM_BALL_FUSION    1          // 0 = ignore the camera ball (IR-only chase)
+const uint8_t CAM_BALL_NEAR_CM      = 25;   // camera ball "short range" gate (cm)
+const int     CAM_BALL_DISAGREE_DEG = 35;   // |camBall - IR| over this at short range -> trust camera
+
 // ---- Aim behaviour ----
 // AIM_TURN_SIGN: BNO055 yaw direction vs the camera's "+ = right". CANNOT be
 // assumed. We command heading = (heading + AIM_TURN_SIGN*openCornerBear). If a
@@ -293,14 +303,15 @@ bool lineBack()  { return (line.mask & (1 << LN_BACK_BIT))  != 0; }
 // ============================ end line receiver ==============================
 
 // ============================================================================
-//  GOAL CAMERA RECEIVER  -  OpenMV H7 on Serial2 (goal_cam.py is the authority).
-//  9-byte frame, parsed non-blocking exactly like ultrasonicPoll:
+//  GOAL CAMERA RECEIVER  -  OpenMV H7 on Serial2 (Goal_Cam.py is the authority).
+//  11-byte frame, parsed non-blocking exactly like ultrasonicPoll:
 //    [0]=0xAA [1]=0x55 [2]=flags [3]=attackBearing(i8) [4]=attackDist(u8)
 //    [5]=openCornerBear(i8) [6]=keeperBearing(i8) [7]=ownGoalBearing(i8)
-//    [8]=checksum = (sum of bytes 2..7) & 0xFF
-//  flags: bit0 attackGoalSeen | bit1 ownGoalSeen | bit2 keeperSeen.
+//    [8]=ballBearing(i8) [9]=ballDist(u8) [10]=checksum = (sum of bytes 2..9) & 0xFF
+//  flags: bit0 attackGoalSeen | bit1 ownGoalSeen | bit2 keeperSeen | bit3 ballSeen.
 //  The bearing fields are SIGNED int8 (+ = right of forward), matching
-//  goal_cam.py send_frame().
+//  Goal_Cam.py send_frame(). The ball fields feed the camera+IR fusion (see loop()).
+//  >>> Flash the camera and this sketch together: the frame length changed (9 -> 11).
 // ============================================================================
 #define CAM_SYNC0 0xAA
 #define CAM_SYNC1 0x55
@@ -310,17 +321,20 @@ struct CameraData {
   bool     attackGoalSeen;
   bool     ownGoalSeen;
   bool     keeperSeen;
+  bool     ballSeen;         // camera sees the orange ball (fusion cross-check)
   int8_t   attackBearing;
   uint8_t  attackDist;
   int8_t   openCornerBear;   // THE aim angle
   int8_t   keeperBearing;
   int8_t   ownGoalBearing;
+  int8_t   ballBearing;      // + = ball to the robot's right (camera convention)
+  uint8_t  ballDist;         // coarse cm, 255 = far/unknown
   uint32_t lastUpdateMs;
 };
-CameraData cam = {false, false, false, 0, 255, 0, 0, 0, 0};
+CameraData cam = {false, false, false, false, 0, 255, 0, 0, 0, 0, 255, 0};
 
 bool camPoll(Stream &port) {
-  static uint8_t buf[9];
+  static uint8_t buf[11];
   static uint8_t idx = 0;
   bool got = false;
 
@@ -330,18 +344,22 @@ bool camPoll(Stream &port) {
     else if (idx == 1) { if (b == CAM_SYNC1) buf[idx++] = b; else idx = 0; }
     else {
       buf[idx++] = b;
-      if (idx >= 9) {
+      if (idx >= 11) {
         idx = 0;
-        uint8_t sum = (uint8_t)(buf[2] + buf[3] + buf[4] + buf[5] + buf[6] + buf[7]);
-        if (sum == buf[8]) {
+        uint8_t sum = (uint8_t)(buf[2] + buf[3] + buf[4] + buf[5] + buf[6]
+                              + buf[7] + buf[8] + buf[9]);
+        if (sum == buf[10]) {
           cam.attackGoalSeen = (buf[2] & 0x01) != 0;
           cam.ownGoalSeen    = (buf[2] & 0x02) != 0;
           cam.keeperSeen     = (buf[2] & 0x04) != 0;
+          cam.ballSeen       = (buf[2] & 0x08) != 0;
           cam.attackBearing  = (int8_t)buf[3];
           cam.attackDist     = buf[4];
           cam.openCornerBear = (int8_t)buf[5];
           cam.keeperBearing  = (int8_t)buf[6];
           cam.ownGoalBearing = (int8_t)buf[7];
+          cam.ballBearing    = (int8_t)buf[8];
+          cam.ballDist       = buf[9];
           cam.lastUpdateMs   = millis();
           got = true;
         }
@@ -636,6 +654,21 @@ void loop() {
   float dir = g_ballDir;
   if (IR_DIR_INVERT) dir = -dir;
 
+  // ---- camera + IR ball fusion (IR PRIMARY; camera = short-range check / fallback) ----
+  bool ballSeen = g_ballSeen;
+#if USE_CAM_BALL_FUSION
+  if (cam.ballSeen && !camStale()) {
+    // map the camera ball ("+right, 0=front") into the IR `dir` convention (ahead ~ +/-180)
+    float camDir  = wrap180(180.0f - (float)cam.ballBearing);
+    bool  camNear = (cam.ballDist <= CAM_BALL_NEAR_CM);     // 255 = far/unknown -> not near
+    if (!g_ballSeen) {
+      dir = camDir; ballSeen = true;                        // IR blind -> chase the camera ball
+    } else if (camNear && fabs(wrap180(camDir - dir)) > (float)CAM_BALL_DISAGREE_DEG) {
+      dir = camDir;                                         // close range + IR disagrees -> trust camera
+    }
+  }
+#endif
+
   imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   float heading = euler.x();
 
@@ -654,7 +687,7 @@ void loop() {
   TopState top;
   if (haveBall)             top = ST_AIM;
   else if (avoidActive)     top = ST_AVOID;
-  else if (g_ballSeen)      top = ST_CHASE;
+  else if (ballSeen)        top = ST_CHASE;   // ballSeen = IR ring OR camera fallback (fusion)
   else                      top = ST_IDLE;
 
   // ---- setpoint selection: only AIM overrides the forward heading ----
@@ -736,6 +769,9 @@ void loop() {
     // ---- camera + aim ----
     Serial.print(" | CAM g="); Serial.print(cam.attackGoalSeen ? 1 : 0);
     Serial.print(" open=");    Serial.print(cam.openCornerBear);
+    Serial.print(" ball=");    Serial.print(cam.ballSeen ? 1 : 0);
+    Serial.print("@");         Serial.print(cam.ballBearing);
+    Serial.print("/");         Serial.print(cam.ballDist);
     Serial.print(camStale() ? "(STALE)" : "");
     Serial.print(" KICKGATE="); Serial.print(goalAimReady() ? 1 : 0);
     Serial.print(" aim=");      Serial.print(setpoint, 1);
