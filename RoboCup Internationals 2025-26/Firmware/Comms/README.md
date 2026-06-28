@@ -14,9 +14,9 @@ base-attacker resumes attacking at the next referee **GO** (kick-off).
 - **Scaffold:** [`RoleDispatch_Example/RoleDispatch_Example.ino`](RoleDispatch_Example/RoleDispatch_Example.ino)
 - **Library required:** RF24 (TMRh20) — <https://github.com/nRF24/RF24>
 
-> **Status:** bench-validation-required, **not yet hardware-tested**. Every pin,
-> the RF channel, and the timings are marked `>>> BENCH-VERIFY` in `RobotLink.h`.
-> A dead/absent radio is safe by design — see *Fail-safe* below.
+> Radio pins, the RF channel, and the timings are marked `>>> BENCH-VERIFY` in
+> `RobotLink.h` — confirm them against Main_PCB_2.0 before wiring. A dead or absent
+> radio is safe by design — see *Fail-safe* below.
 
 > **RCJ compliance:** robot-to-robot only. No PC, phone, or access point in the
 > link; 2.4 GHz peer-to-peer is the permitted inter-robot band.

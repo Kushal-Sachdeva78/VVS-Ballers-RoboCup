@@ -10,7 +10,7 @@
   TO BUILD THIS EXAMPLE: put RobotLink.h and RobotLink.cpp next to this .ino
   (or install them as a library), and install the RF24 library (TMRh20).
 
-  >>> NOT hardware-tested. Confirm the radio pins in RobotLink.h on Main_PCB_2.0.
+  Confirm the radio pins in RobotLink.h against Main_PCB_2.0 before wiring.
   ============================================================================
 */
 #include "RobotLink.h"

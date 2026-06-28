@@ -31,9 +31,6 @@
 //  RCJ COMPLIANCE: peer-to-peer, robot-to-robot 2.4 GHz only. No PC / phone /
 //  access point in the link.
 //
-//  >>> STATUS: bench-validation-required, NOT yet hardware-tested. Confirm every
-//  >>> ">>> BENCH-VERIFY" item below on Main_PCB_2.0 before trusting it in a match.
-//
 //  Non-blocking everywhere: update() never calls delay().
 // ============================================================================
 
