@@ -307,7 +307,7 @@ bool lineBack()  { return (line.mask & (1 << LN_BACK_BIT))  != 0; }
 //  11-byte frame, parsed non-blocking exactly like ultrasonicPoll:
 //    [0]=0xAA [1]=0x55 [2]=flags [3]=attackBearing(i8) [4]=attackDist(u8)
 //    [5]=openCornerBear(i8) [6]=keeperBearing(i8) [7]=ownGoalBearing(i8)
-//    [8]=ballBearing(i8) [9]=ballDist(u8) [10]=checksum = (sum of bytes 2..9) & 0xFF
+//    [8]=ballBearing(i8) [9]=ballDist(u8) [10]=crc8 = CRC-8 (poly 0x07) over bytes 2..9
 //  flags: bit0 attackGoalSeen | bit1 ownGoalSeen | bit2 keeperSeen | bit3 ballSeen.
 //  The bearing fields are SIGNED int8 (+ = right of forward), matching
 //  Goal_Cam.py send_frame(). The ball fields feed the camera+IR fusion (see loop()).
@@ -346,9 +346,7 @@ bool camPoll(Stream &port) {
       buf[idx++] = b;
       if (idx >= 11) {
         idx = 0;
-        uint8_t sum = (uint8_t)(buf[2] + buf[3] + buf[4] + buf[5] + buf[6]
-                              + buf[7] + buf[8] + buf[9]);
-        if (sum == buf[10]) {
+        if (us_crc8(&buf[2], 8) == buf[10]) {   // CRC-8 (poly 0x07) over the 8 payload bytes
           cam.attackGoalSeen = (buf[2] & 0x01) != 0;
           cam.ownGoalSeen    = (buf[2] & 0x02) != 0;
           cam.keeperSeen     = (buf[2] & 0x04) != 0;
@@ -423,11 +421,22 @@ void stopMotors() {
 // Drive one sector pattern at `speed`, heading-hold correction layered on top.
 // With speed = 0 only the turnSign*correction term remains -> a pure spin in
 // place (this is how aiming rotates the chassis toward the open corner).
+// The four wheel commands are NORMALISED: if any exceeds the driver range we scale all
+// four by 255/max, so the commanded heading + translation direction are preserved at
+// full tilt instead of being distorted by clamping each wheel independently.
 void driveSector(Sector s, int speed, float correction) {
-  setMotor(M1_EN, M1_DIR, moveSign[s][0]*speed + (int)(turnSign[0]*correction));
-  setMotor(M2_EN, M2_DIR, moveSign[s][1]*speed + (int)(turnSign[1]*correction));
-  setMotor(M3_EN, M3_DIR, moveSign[s][2]*speed + (int)(turnSign[2]*correction));
-  setMotor(M4_EN, M4_DIR, moveSign[s][3]*speed + (int)(turnSign[3]*correction));
+  long w[4];
+  for (int i = 0; i < 4; i++)
+    w[i] = (long)moveSign[s][i] * speed + (long)(turnSign[i] * correction);
+
+  long m = 0;
+  for (int i = 0; i < 4; i++) { long a = (w[i] < 0) ? -w[i] : w[i]; if (a > m) m = a; }
+  if (m > 255) for (int i = 0; i < 4; i++) w[i] = (w[i] * 255) / m;
+
+  setMotor(M1_EN, M1_DIR, (int)w[0]);
+  setMotor(M2_EN, M2_DIR, (int)w[1]);
+  setMotor(M3_EN, M3_DIR, (int)w[2]);
+  setMotor(M4_EN, M4_DIR, (int)w[3]);
 }
 
 float wrap180(float a){ while (a > 180) a -= 360; while (a < -180) a += 360; return a; }

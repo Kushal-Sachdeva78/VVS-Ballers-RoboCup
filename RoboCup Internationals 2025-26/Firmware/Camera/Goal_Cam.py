@@ -37,8 +37,8 @@
 #   byte 7  : ownGoalBearing  int8  deg  (handy for orientation/defense)
 #   byte 8  : ballBearing     int8  deg, +right (valid only if bit3 set)
 #   byte 9  : ballDist        uint8 coarse cm (255 = far/unknown)
-#   byte 10 : checksum        (sum of bytes 2..9) & 0xFF
-#   Teensy: wait for 0xAA,0x55 -> read 8 payload bytes + checksum -> verify.
+#   byte 10 : crc8            CRC-8 (poly 0x07, init 0x00) over bytes 2..9
+#   Teensy: wait for 0xAA,0x55 -> read 8 payload bytes + crc8 -> verify.
 #
 #  TO RUN ON BOOT: save this file onto the OpenMV flash as  main.py
 # ============================================================================
@@ -191,11 +191,19 @@ def u8(v):
     v = int(round(v))
     return 255 if v > 255 else (0 if v < 0 else v)
 
+def crc8(data):
+    # CRC-8, poly 0x07, init 0x00 - byte-identical to us_crc8() on the main board.
+    c = 0
+    for b in data:
+        c ^= b
+        for _ in range(8):
+            c = ((c << 1) ^ 0x07) & 0xFF if (c & 0x80) else (c << 1) & 0xFF
+    return c
+
 def send_frame(flags, a_bear, a_dist, open_bear, k_bear, o_bear, ball_bear, ball_dist):
     payload = [flags & 0xFF, s8(a_bear), u8(a_dist), s8(open_bear), s8(k_bear), s8(o_bear),
                s8(ball_bear), u8(ball_dist)]
-    chk = sum(payload) & 0xFF
-    uart.write(bytes([HDR0, HDR1] + payload + [chk]))
+    uart.write(bytes([HDR0, HDR1] + payload + [crc8(payload)]))
 
 # ----------------------------------------------------------------------------
 # 4) MAIN LOOP

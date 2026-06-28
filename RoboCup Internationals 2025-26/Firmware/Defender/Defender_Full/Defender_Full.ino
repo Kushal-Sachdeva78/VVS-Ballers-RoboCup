@@ -472,8 +472,7 @@ void cameraPoll() {
       buf[idx++] = b;
       if (idx >= 11) {
         idx = 0;
-        uint8_t sum = (uint8_t)(buf[2]+buf[3]+buf[4]+buf[5]+buf[6]+buf[7]+buf[8]+buf[9]);
-        if (sum == buf[10]) {
+        if (us_crc8(&buf[2], 8) == buf[10]) {   // CRC-8 (poly 0x07) over the 8 payload bytes
           cam.attackSeen    = buf[2] & 0x01;
           cam.ownSeen       = buf[2] & 0x02;
           cam.keeperSeen    = buf[2] & 0x04;

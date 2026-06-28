@@ -7,15 +7,13 @@
     wall can't cook the gearmotor. Runs entirely on the external Nano;
     the Teensy keeps doing the motor PWM on the IN pins as usual.
 
-    *** REQUIRED CHANGE ON YOUR MAIN PCB ***
-    Right now every DRV8263H has DRVOFF -> GND, which is what keeps the
-    drivers enabled. While DRVOFF is grounded the Nano CANNOT cut the
-    motors and this sketch does nothing. So on each driver:
-        - disconnect DRVOFF from the GND rail
-        - run DRVOFF to the Nano instead (pins below)
-    The Nano then holds DRVOFF LOW to run and drives it HIGH to coast.
-    (Side effect: the Nano is now in the enable path - if it isn't
-    running, those motors stay coasted. Fail-safe, but expected.)
+    *** MAIN PCB WIRING (done) ***
+    Each DRV8263H's DRVOFF is lifted off the GND rail and run to the Nano
+    (pins below): the Nano holds DRVOFF LOW to run and drives it HIGH to coast
+    a stalled motor. That is what lets this supervisor actually cut a pinned
+    wheel's current.
+    (Side effect: the Nano is now in the enable path - if it isn't running,
+    those motors stay coasted. Fail-safe, but expected.)
 
     WIRING  -  Main PCB  ->  Nano Every
         Driver #1 IPROPI -> A0      Driver #1 DRVOFF -> D2

@@ -5,9 +5,9 @@
     chops on/off around ~1 A, holding the current near the cap instead
     of letting it run up to the ~1.6 A stall.
 
-    REQUIRES (unchanged): each driver's DRVOFF lifted off the GND rail
-    and wired to the Nano; shared ground between Nano and Main PCB.
-    The Teensy still generates the motor PWM on the IN pins.
+    WIRING: each driver's DRVOFF is lifted off the GND rail and run to the
+    Nano; shared ground between Nano and Main PCB. The Teensy still generates
+    the motor PWM on the IN pins.
 
         Driver #1  IPROPI -> A0   DRVOFF -> D2
         Driver #2  IPROPI -> A1   DRVOFF -> D3

@@ -57,7 +57,8 @@ the main board differs.
 ## Electronics — the boards
 
 The robot is a **multi-board design**: each subsystem has its own microcontroller,
-and the boards talk to the main board over **CRC-checked UART links**. This keeps
+and the boards talk to the main board over compact **UART links** (CRC-8-framed, bar
+the plain-ASCII IR link). This keeps
 the fast sensor loops off the main control CPU.
 
 | Board | MCU | Does | KiCad | Firmware |

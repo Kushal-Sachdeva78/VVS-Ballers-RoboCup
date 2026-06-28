@@ -61,7 +61,8 @@ the main board differs.
 ## Electronics — the boards
 
 A **multi-board design**: each subsystem has its own microcontroller, and the boards
-talk to the main board over **CRC-checked UART links**, keeping the fast sensor loops
+talk to the main board over compact **UART links** (CRC-8-framed, bar the plain-ASCII
+IR link), keeping the fast sensor loops
 off the main control CPU.
 
 | Board | MCU | Does | KiCad | Firmware |

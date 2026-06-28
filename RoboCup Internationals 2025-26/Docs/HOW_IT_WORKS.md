@@ -35,7 +35,7 @@ which fuses everything and drives the wheels and kicker.
 
 Why split it up: the IR ring, the line ring, and the ultrasonics each need to be
 sampled fast and continuously. Giving each its own MCU keeps those tight loops off
-the main control CPU, and the **CRC-checked UART links** mean a glitch on any wire
+the main control CPU, and the **CRC-8-checked binary links** (ultrasonic, line, camera) mean a glitch on those wires
 is rejected rather than acted on.
 
 | Board | MCU | Link to main | Source |
@@ -86,7 +86,7 @@ sensor logic run at 3.3 V; the four motor drivers take 12 V power and 3.3 V logi
 ### Motors and pin map
 
 Four omni wheels in a diamond, each on a **DRV8263H** brushed driver in PH/EN mode
-(`MODE/SR/DRVOFF → GND`, `SLEEP → pin 6` shared). Motors are Pololu 12 V gearmotors.
+(`MODE/SR → GND`, `DRVOFF → Nano D2-D5`, `SLEEP → pin 6` shared). Motors are Pololu 12 V gearmotors.
 
 | Motor | IN1 / IN2 (Teensy) | In firmware |
 |---|---|---|
@@ -109,9 +109,11 @@ sign tables do the mixing:
 
 `driveSector(sector, speed, correction)` = `moveSign·speed + turnSign·correction`.
 With `speed = 0` only the `turnSign·correction` term survives, which is a **pure spin
-in place** — exactly how the attacker rotates to aim. The defender uses a fuller
-holonomic mixer, `driveXY(vx, vy, corr)`, that combines a forward and a sideways
-velocity and then **normalises** so no wheel command exceeds 255.
+in place** — exactly how the attacker rotates to aim. Both drives **normalise** their
+four wheel commands — if any would exceed 255, all four are scaled by 255/max, so the
+heading and translation direction are preserved at full tilt rather than distorted by
+per-wheel clamping. The defender additionally uses a fuller holonomic mixer,
+`driveXY(vx, vy, corr)`, combining a forward and a sideways velocity.
 
 ### Heading-hold PID (BNO055)
 
@@ -265,12 +267,12 @@ consecutive in-range pings the ball is "captured" and the kicker can arm (§6, �
 ## 5. Inter-board communication
 
 Three of the four links are short **binary frames** that share one design: a 2-byte
-sync header, a little-endian payload, and an integrity byte, with the sync bytes
-differing between links so a mis-wire can't false-lock one stream onto another. The
-**ultrasonic and line** links use an identical **CRC-8 (polynomial 0x07, init 0x00)**;
-the lighter **camera** link uses a **modular sum-check** (it carries no
-safety-critical distances). A per-link **stale timeout (~200 ms)** means frozen or
-dead data is never acted on, and the **IR** link (§5.4) is plain ASCII.
+sync header, a little-endian payload, an integrity byte, and a stale timeout, with the
+sync bytes differing between links so a mis-wire can't false-lock one stream onto
+another. The **ultrasonic, line, and camera** links all carry an identical **CRC-8
+(polynomial 0x07, init 0x00)**, so the main board rejects any corrupted frame. A
+per-link **stale timeout (~200 ms)** means frozen or dead data is never acted on. The
+**IR** link (§5.4) is the exception — plain delimited ASCII with no checksum.
 
 ### 5.1 Ultrasonic → Main (Serial3, 13 bytes)
 
@@ -286,9 +288,9 @@ dead data is never acted on, and the **IR** link (§5.4) is plain ASCII.
 ```
 [0]=0xAA [1]=0x55 [2]=flags [3]=attackBearing(i8) [4]=attackDist(u8)
 [5]=openCornerBear(i8) [6]=keeperBearing(i8) [7]=ownGoalBearing(i8)
-[8]=ballBearing(i8) [9]=ballDist(u8) [10]=checksum
+[8]=ballBearing(i8) [9]=ballDist(u8) [10]=crc8
   flags: bit0 attackGoalSeen, bit1 ownGoalSeen, bit2 keeperSeen, bit3 ballSeen
-  checksum: (sum of bytes 2..9) & 0xFF
+  crc8: CRC-8 (poly 0x07, init 0x00) over bytes 2..9
 ```
 
 ### 5.3 Line → Main (Serial8, 9 bytes)
@@ -305,7 +307,9 @@ The `0xA5/0x5A` sync is deliberately different from the ultrasonic link's
 ### 5.4 IR → Main (Serial4, ASCII)
 
 `"<dir>a\t\r\n<dist>b\t\r\n"`; `a` ends the direction field, `b` ends the frame, and
-`500` means "no ball". The distance field is parsed for sync but ignored.
+`500` means "no ball". This link is **delimited ASCII with no checksum** — the `a`/`b`
+delimiters and the `500` sentinel are the only framing. The distance field is parsed
+for sync but ignored.
 
 > **Both robots now decode the same line frame.** `Defender_Full` was previously
 > written against a *planned* 8-byte depth/side frame the line boards never emitted; it
@@ -464,10 +468,8 @@ The constants most worth knowing, by file:
    ultrasonic; the line marks the box edges (§5.4, §7).
 2. **Camera is read on the main board's Serial2**, not the IR-board header on pins
    34/35 (§4.4).
-3. **Motor-current watchdog needs a board mod** — it only works if each DRV8263H's
-   `DRVOFF` is lifted off GND and wired to the Nano (`Firmware/Motor_Current`).
-4. **Level-shift the ultrasonic TX** into the 3.3 V Teensy RX (§4.2).
-5. **The ultrasonic side enum is robot-specific** (board mounted 180°); fix it in one
+3. **Level-shift the ultrasonic TX** into the 3.3 V Teensy RX (§4.2).
+4. **The ultrasonic side enum is robot-specific** (board mounted 180°); fix it in one
    place if the board is re-seated.
 6. **Roles: flash-time by default, with optional radio switching** — the attacker and
    defender are the same robot with different main-board firmware. An optional
