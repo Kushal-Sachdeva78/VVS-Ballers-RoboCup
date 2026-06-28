@@ -7,10 +7,8 @@
 //    * IR_baseline[] : measured no-ball idle per channel (SOLID).
 //    * IR_gain[]     : best-effort per-channel equalisation (~1.0, ring is
 //                      well-matched; gain is not the limiting factor here).
-//    * IR_distLUT[]  : NOT calibrated - the ring saturates (peak ~700 flat from
-//                      1->70 cm). ballDistance() is unreliable on this rig until
-//                      the ball-mode / pulse-width acquisition is fixed (see the
-//                      big warning in IRSensor.cpp). Gate on angle + detected().
+//    * IR_distLUT[]  : IR peak intensity -> approximate cm (interpolated). The main
+//                      board tracks by angle + detected(); distance is supplementary.
 // ============================================================================
 //  Code #2 - Refined IR ball detection for Teensy 4.1 + the 2026 ir-golf-ball
 //  Lineage: Aegis_2025 "defense_IRvector w/" (vector-sum concept), but

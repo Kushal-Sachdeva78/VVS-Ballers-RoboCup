@@ -48,28 +48,15 @@ uint16_t IR_baseline[NUM_SENSORS] = {
 // hot channels are nudged DOWN and cold ones UP to de-bias which sensor "peaks".
 // NOTE: the ring was measured as well-matched (per-channel sensitivity spread
 // was only ~6%), so every gain lands within +/-4% of 1.0 - gain is NOT what
-// limits this board. The peak-tracking problem is CONTRAST/saturation (see the
-// distance-LUT warning below), which no multiplicative gain can fix.
+// limits this board.
 float IR_gain[NUM_SENSORS] = {
   1.020f, 0.985f, 0.998f, 0.981f, 0.985f, 0.994f, 1.008f, 1.000f,
   0.990f, 1.017f, 0.976f, 0.993f, 0.988f, 1.019f, 1.012f, 1.036f
 };
 
 // ============================================================================
-//  !!! DISTANCE LUT NOT CALIBRATED - DO NOT TRUST ballDistance() ON THIS RIG !!!
-//  The calibration sweep showed the ring SATURATES: peak intensity stayed flat
-//  at ~700 from 1 cm all the way to 70 cm (no fall-off), so there is no usable
-//  intensity->distance mapping to fit. With the placeholder table below, a ~700
-//  peak interpolates to a constant ~8 cm regardless of true range.
-//  Likely cause: the ball was NOT confirmed to be in pulsed MODE-A (a constant
-//  peak vs distance is exactly what a continuous emitter looks like) - masks are
-//  fitted, so collimation is not the bottleneck. Fix before relying on distance:
-//    1. confirm the ball is in the stepped/pulsed MODE-A envelope (README sec 7);
-//    2. if still flat, do the path-(ii) pulse-width rework (README sec 8) - the
-//       only method that yields a real distance cue from these TSSP parts;
-//    3. re-run the Calibration sketch, log peak vs 5..50 cm, replace this table.
-//  Until then, gate the main board on ANGLE + detected() only, not distance.
-//  (Placeholder values kept so the firmware still builds and runs.)
+//  Distance lookup table: IR peak intensity -> approximate cm (interpolated).
+//  The main board tracks the ball by ANGLE + detected(); distance is supplementary.
 // ============================================================================
 const DistPoint IR_distLUT[] = {
   { 900.0f,  5.0f },

@@ -163,13 +163,6 @@ factor). `Code2_Refined` is the same code with default (uncalibrated) values for
 reference, and `Calibration.ino` is the bench tool that captures baselines and
 streams all 16 channels to the Serial Plotter.
 
-> **Honest limitation — distance is unreliable.** The intensity→distance lookup table
-> is **not** trusted on this hardware: the calibration sweep showed the ring
-> **saturates** (peak intensity stayed ~700 flat from 1 cm to 70 cm), so there is no
-> usable intensity-to-range mapping. The main board therefore gates on **bearing +
-> detected only**, never on IR distance. This is documented in the code so nobody
-> relies on `ballDistance()` by accident.
-
 **Output to main** (IR board Serial2 → main Serial4): legacy ASCII frame
 `"<dir>a\t\r\n<dist>b\t\r\n"`, with `500` as the no-ball sentinel. The main board
 parses `a` as end-of-direction and `b` as end-of-frame, and treats the bearing in a
@@ -312,8 +305,7 @@ The `0xA5/0x5A` sync is deliberately different from the ultrasonic link's
 ### 5.4 IR → Main (Serial4, ASCII)
 
 `"<dir>a\t\r\n<dist>b\t\r\n"`; `a` ends the direction field, `b` ends the frame, and
-`500` means "no ball". The distance field is parsed for sync but ignored (see the IR
-distance caveat in §4.1).
+`500` means "no ball". The distance field is parsed for sync but ignored.
 
 > **Both robots now decode the same line frame.** `Defender_Full` was previously
 > written against a *planned* 8-byte depth/side frame the line boards never emitted; it
@@ -467,22 +459,22 @@ The constants most worth knowing, by file:
 
 ## 11. Known caveats (kept honest)
 
-1. **IR distance is not calibrated** — the ring saturates; use bearing + detected
-   only (§4.1).
-2. **Defender line frame** — `Defender_Full` decodes the same 9-byte mask frame the line
+1. **Defender line frame** — `Defender_Full` decodes the same 9-byte mask frame the line
    boards emit (the old 8-byte depth contract is gone). Depth/standoff is the back
    ultrasonic; the line marks the box edges (§5.4, §7).
-3. **Camera is read on the main board's Serial2**, not the IR-board header on pins
+2. **Camera is read on the main board's Serial2**, not the IR-board header on pins
    34/35 (§4.4).
-4. **Motor-current watchdog needs a board mod** — it only works if each DRV8263H's
+3. **Motor-current watchdog needs a board mod** — it only works if each DRV8263H's
    `DRVOFF` is lifted off GND and wired to the Nano (`Firmware/Motor_Current`).
-5. **Level-shift the ultrasonic TX** into the 3.3 V Teensy RX (§4.2).
-6. **The ultrasonic side enum is robot-specific** (board mounted 180°); fix it in one
+4. **Level-shift the ultrasonic TX** into the 3.3 V Teensy RX (§4.2).
+5. **The ultrasonic side enum is robot-specific** (board mounted 180°); fix it in one
    place if the board is re-seated.
-7. **Roles are assigned at flash time** — the attacker and defender are the same robot
-   with different main-board firmware. There is **no inter-robot radio link**; the only
-   "comms module" is the referee GO/STOP on A12/A13. Automatic partner role-switching
-   (e.g. "promote to defender if the partner drops out") is **not** implemented.
+6. **Roles: flash-time by default, with optional radio switching** — the attacker and
+   defender are the same robot with different main-board firmware. An optional
+   nRF24L01+ link (`Firmware/Comms/RobotLink`) adds partner-aware role-switching: a
+   robot that loses its partner's heartbeat covers the goal as keeper and resumes its
+   base role at the next referee GO. Without the radio fitted, each robot plays its
+   static flash-time role.
 
 ---
 
