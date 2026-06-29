@@ -5,7 +5,7 @@
 <h1 align="center">VVS Ballers — RoboCupJunior Soccer</h1>
 
 <p align="center">
-  Autonomous RoboCupJunior Soccer robots by <b>K.A.D Ballers</b> (Team VVS Ballers),
+  Autonomous RoboCupJunior Soccer robots by Team VVS Ballers,
   designed and iterated across multiple seasons — from EV3 regional robots to a
   custom Teensy-based international platform.<br>
   Firmware (C++) · multi-board electronics (KiCad) · mechanical design (Fusion 360).
