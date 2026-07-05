@@ -11,6 +11,10 @@
   Firmware (C++) · multi-board electronics (KiCad) · mechanical design (Fusion 360).
 </p>
 
+<p align="center">
+  <img src="RoboCup%20Internationals%202025-26/Docs/Images/Robots/Both_Robots.jpg" alt="The two Internationals 2025-26 robots with the IR ball" width="760">
+</p>
+
 ---
 
 ## Seasons
@@ -26,6 +30,10 @@
 > page focuses on them. The full detail lives in that folder's
 > **[detailed README](RoboCup%20Internationals%202025-26/README.md)** and a complete
 > **[technical deep-dive](RoboCup%20Internationals%202025-26/Docs/HOW_IT_WORKS.md)**.
+> Competition media: **[TDP](RoboCup%20Internationals%202025-26/Docs/TDP.pdf)** ·
+> **[poster](RoboCup%20Internationals%202025-26/Docs/RoboCup_Internationals_Poster.png)** ·
+> **[TDP video](https://github.com/Kushal-Sachdeva78/VVS-Ballers-RoboCup/releases/download/internationals-2025-26-media/VVS_Ballers_TDP_Video.mp4)** ·
+> **[photo gallery](RoboCup%20Internationals%202025-26/Docs/Images)**.
 >
 > Code-span paths below (e.g. `Firmware/Attacker`) are relative to
 > [`RoboCup Internationals 2025-26/`](RoboCup%20Internationals%202025-26/).
@@ -111,8 +119,9 @@ wall or driving fully into the marked penalty area is an **out-of-bounds penalty
 - **Referee start/stop.** The main board reads the RoboCupJunior **Communication
   Module** GO/STOP lines, so a referee can start and halt the robot as required.
 
-The inter-board links (IR, ultrasonic, line, camera → main) are short binary frames,
-each guarded by an identical **CRC-8 (poly 0x07)**. Full byte-level layouts are in the
+The binary inter-board links (ultrasonic, line, camera → main) are short frames, each
+guarded by an identical **CRC-8 (poly 0x07)**; the IR link is plain delimited ASCII.
+Full byte-level layouts are in the
 [technical deep-dive](RoboCup%20Internationals%202025-26/Docs/HOW_IT_WORKS.md).
 
 ## Team

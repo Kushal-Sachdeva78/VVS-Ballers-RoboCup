@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<rect width="900" height="900" fill="#FFFFFF"/>
+<text x="40" y="52" font-size="30" font-weight="800" fill="#1F2937" text-anchor="start">Kicker Firmware — Fires Only on a Confirmed Ball</text><text x="40" y="80" font-size="15.5" font-weight="400" fill="#475569" text-anchor="start">a capture HC-SR04 gates a relay-switched 48 V solenoid, wrapped in firmware safety limits</text>
+<polygon points="300,140 480.0,200.0 300,260 120.0,200.0" fill="#FFF8EE" stroke="#E08A2B" stroke-width="2"/>
+<text x="300" y="194.0" font-size="16" font-weight="700" fill="#1F2937" text-anchor="middle">Ball in mouth?</text>
+<text x="300" y="216.0" font-size="12.5" font-weight="400" fill="#475569" text-anchor="middle">capture HC-SR04 &lt; 45 mm</text>
+<line x1="120.0" y1="200.0" x2="59.0" y2="200.0" stroke="#6B7280" stroke-width="2.5" stroke-linecap="round"/><polygon points="50.0,200.0 59.0,195.3 59.0,204.7" fill="#6B7280"/>
+<text x="85.0" y="192.0" font-size="12" font-weight="700" fill="#475569" text-anchor="middle">no → wait</text>
+<line x1="300.0" y1="260.0" x2="300.0" y2="289.0" stroke="#6B7280" stroke-width="3" stroke-linecap="round"/><polygon points="300.0,300.0 294.3,289.0 305.7,289.0" fill="#6B7280"/>
+<text x="324" y="282" font-size="12" font-weight="700" fill="#475569" text-anchor="start">yes</text>
+<rect x="120.0" y="300" width="360" height="72" rx="10" ry="10" fill="#F5F7F9" stroke="#CBD5E1" stroke-width="1.5"/><rect x="120.0" y="300" width="7" height="72" rx="3" ry="3" fill="#2F7DC4"/><text x="300.0" y="332.0" font-size="16" font-weight="700" fill="#1F2937" text-anchor="middle">2-sample capture debounce</text><text x="300.0" y="353.0" font-size="12.5" font-weight="400" fill="#475569" text-anchor="middle">reject a single stray echo</text>
+<line x1="300.0" y1="372.0" x2="300.0" y2="389.0" stroke="#6B7280" stroke-width="3" stroke-linecap="round"/><polygon points="300.0,400.0 294.3,389.0 305.7,389.0" fill="#6B7280"/>
+<rect x="120.0" y="400" width="360" height="72" rx="10" ry="10" fill="#F5F7F9" stroke="#CBD5E1" stroke-width="1.5"/><rect x="120.0" y="400" width="7" height="72" rx="3" ry="3" fill="#E08A2B"/><text x="300.0" y="432.0" font-size="16" font-weight="700" fill="#1F2937" text-anchor="middle">Aim: open corner within 5°</text><text x="300.0" y="453.0" font-size="12.5" font-weight="400" fill="#475569" text-anchor="middle">attacker only — defender skips to a clearing kick</text>
+<line x1="300.0" y1="472.0" x2="300.0" y2="489.0" stroke="#6B7280" stroke-width="3" stroke-linecap="round"/><polygon points="300.0,500.0 294.3,489.0 305.7,489.0" fill="#6B7280"/>
+<rect x="120.0" y="500" width="360" height="72" rx="10" ry="10" fill="#F5F7F9" stroke="#CBD5E1" stroke-width="1.5"/><rect x="120.0" y="500" width="7" height="72" rx="3" ry="3" fill="#8B5CF6"/><text x="300.0" y="532.0" font-size="16" font-weight="700" fill="#1F2937" text-anchor="middle">Fire relay (pin 22) → 48 V solenoid</text><text x="300.0" y="553.0" font-size="12.5" font-weight="400" fill="#475569" text-anchor="middle">fixed 500 ms pulse</text>
+<line x1="300.0" y1="572.0" x2="300.0" y2="589.0" stroke="#6B7280" stroke-width="3" stroke-linecap="round"/><polygon points="300.0,600.0 294.3,589.0 305.7,589.0" fill="#6B7280"/>
+<rect x="120.0" y="600" width="360" height="72" rx="10" ry="10" fill="#F5F7F9" stroke="#CBD5E1" stroke-width="1.5"/><rect x="120.0" y="600" width="7" height="72" rx="3" ry="3" fill="#3FA34D"/><text x="300.0" y="632.0" font-size="16" font-weight="700" fill="#1F2937" text-anchor="middle">Cooldown 1.5 s</text><text x="300.0" y="653.0" font-size="12.5" font-weight="400" fill="#475569" text-anchor="middle">then return to idle</text>
+<line x1="300.0" y1="672.0" x2="300.0" y2="701.0" stroke="#6B7280" stroke-width="3" stroke-linecap="round"/><polygon points="300.0,712.0 294.3,701.0 305.7,701.0" fill="#6B7280"/>
+<rect x="190" y="712" width="220" height="56" rx="10" ry="10" fill="#F5F7F9" stroke="#CBD5E1" stroke-width="1.5"/><rect x="190" y="712" width="7" height="56" rx="3" ry="3" fill="#27384A"/><text x="300.0" y="736.0" font-size="16" font-weight="700" fill="#1F2937" text-anchor="middle">Idle</text><text x="300.0" y="757.0" font-size="13" font-weight="400" fill="#475569" text-anchor="middle">ready for next ball</text>
+<rect x="630" y="300" width="190" height="250" rx="10" ry="10" fill="#F4ECFB" stroke="#E3D2F5" stroke-width="1.5"/>
+<text x="725" y="332" font-size="14.5" font-weight="700" fill="#1F2937" text-anchor="middle">Always-on guards</text>
+<text x="652" y="366" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">Hard 600 ms</text>
+<text x="652" y="388" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">max-on cutoff</text>
+<text x="652" y="410" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start"></text>
+<text x="652" y="432" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">Boot-safe</text>
+<text x="652" y="454" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">relay state</text>
+<text x="652" y="476" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start"></text>
+<text x="652" y="498" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">2.4 GHz comms</text>
+<text x="652" y="520" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">at 100 Hz</text>
+</svg>

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 432" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<rect width="760" height="432" fill="#FFFFFF"/>
+<text x="20" y="46" font-size="21" font-weight="800" fill="#1F2937" text-anchor="start">Bill of Materials — major components</text>
+<rect x="20" y="68" width="720" height="44" rx="7" fill="#27384A"/>
+<rect x="20" y="105" width="720" height="7" fill="#27384A"/>
+<text x="36" y="96.0" font-size="14" font-weight="800" fill="#FFFFFF" text-anchor="start">Subsystem</text>
+<text x="256" y="96.0" font-size="14" font-weight="800" fill="#FFFFFF" text-anchor="start">Key components (with counts)</text>
+<rect x="20" y="112" width="220" height="50" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+<rect x="240" y="112" width="500" height="50" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+<rect x="20" y="112" width="5" height="50" fill="#3FA34D"/>
+<text x="36" y="143.0" font-size="13.5" font-weight="700" fill="#1F2937" text-anchor="start">Control &amp; vision</text>
+<text x="256" y="143.0" font-size="13" font-weight="400" fill="#475569" text-anchor="start">3× Teensy 4.1  ·  2× Nano Every  ·  OpenMV H7</text>
+<rect x="20" y="162" width="220" height="50" fill="#F5F7F9" stroke="#CBD5E1" stroke-width="1"/>
+<rect x="240" y="162" width="500" height="50" fill="#F5F7F9" stroke="#CBD5E1" stroke-width="1"/>
+<rect x="20" y="162" width="5" height="50" fill="#3FA34D"/>
+<text x="36" y="193.0" font-size="13.5" font-weight="700" fill="#1F2937" text-anchor="start">Drive</text>
+<text x="256" y="193.0" font-size="13" font-weight="400" fill="#475569" text-anchor="start">4× Pololu 20D  ·  4× DRV8263H  ·  4× printed omni wheel</text>
+<rect x="20" y="212" width="220" height="50" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+<rect x="240" y="212" width="500" height="50" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+<rect x="20" y="212" width="5" height="50" fill="#3FA34D"/>
+<text x="36" y="243.0" font-size="13.5" font-weight="700" fill="#1F2937" text-anchor="start">Sensing &amp; navigation</text>
+<text x="256" y="243.0" font-size="13" font-weight="400" fill="#475569" text-anchor="start">16× TSSP58038  ·  4× QTR-MD-05A  ·  5× HC-SR04  ·  BNO055</text>
+<rect x="20" y="262" width="220" height="50" fill="#F5F7F9" stroke="#CBD5E1" stroke-width="1"/>
+<rect x="240" y="262" width="500" height="50" fill="#F5F7F9" stroke="#CBD5E1" stroke-width="1"/>
+<rect x="20" y="262" width="5" height="50" fill="#3FA34D"/>
+<text x="36" y="293.0" font-size="13.5" font-weight="700" fill="#1F2937" text-anchor="start">Power &amp; kicker</text>
+<text x="256" y="293.0" font-size="13" font-weight="400" fill="#475569" text-anchor="start">12 V LiPo  ·  48 V solenoid  ·  relay</text>
+<rect x="20" y="312" width="220" height="50" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+<rect x="240" y="312" width="500" height="50" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+<rect x="20" y="312" width="5" height="50" fill="#3FA34D"/>
+<text x="36" y="343.0" font-size="13.5" font-weight="700" fill="#1F2937" text-anchor="start">Boards &amp; display</text>
+<text x="256" y="343.0" font-size="13" font-weight="400" fill="#475569" text-anchor="start">5× custom PCB (JLCPCB)  ·  16×2 LCD</text>
+<rect x="20" y="376" width="720" height="44" rx="9" fill="#EAF5EC" stroke="#BFE0C6"/>
+<rect x="20" y="376" width="6" height="44" rx="3" fill="#3FA34D"/>
+<text x="38" y="404" font-size="15" font-weight="800" fill="#2C7A3D" text-anchor="start">≈ €600 / robot</text>
+<text x="724" y="404" font-size="11.5" font-weight="400" fill="#475569" text-anchor="end">full priced BOM: github.com/Kushal-Sachdeva78/VVS-Ballers-RoboCup</text>
+</svg>

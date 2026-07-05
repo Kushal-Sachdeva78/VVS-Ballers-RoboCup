@@ -10,6 +10,10 @@
   Firmware(C++) · multi-board electronics (KiCad) · mechanical design (Fusion 360).
 </p>
 
+<p align="center">
+  <img src="Docs/Images/Robots/Both_Robots.jpg" alt="The two robots — one white, one green — facing off over the IR ball" width="760">
+</p>
+
 ---
 
 ## About
@@ -31,6 +35,21 @@ is made against those facts — score in the goal, never cross the line, stay le
 > open-source [IR golf ball](https://github.com/robocup-junior/ir-golf-ball) — the
 > same size as the Vision-league golf ball. The IR ring firmware here is tuned for it.
 
+## Competition documents & media
+
+| | |
+|---|---|
+| 📄 **Team Description Paper** | [`Docs/TDP.pdf`](Docs/TDP.pdf) |
+| 🎬 **TDP video** | [Watch / download](https://github.com/Kushal-Sachdeva78/VVS-Ballers-RoboCup/releases/download/internationals-2025-26-media/VVS_Ballers_TDP_Video.mp4) (154 MB, hosted under [Releases](https://github.com/Kushal-Sachdeva78/VVS-Ballers-RoboCup/releases)) |
+| 🖼️ **Poster** | [`Docs/RoboCup_Internationals_Poster.png`](Docs/RoboCup_Internationals_Poster.png) |
+| 🎤 **Group-interview deck** | [`Docs/VVS_Ballers_GroupInterview_Deck.pptx`](Docs/VVS_Ballers_GroupInterview_Deck.pptx) |
+| 📊 **Block diagram & BOM** | [`Docs/VVS_Ballers_Electronics_Block_Diagram.png`](Docs/VVS_Ballers_Electronics_Block_Diagram.png) · [`Docs/VVS_Ballers_BOM.xlsx`](Docs/VVS_Ballers_BOM.xlsx) |
+| 📷 **Photo gallery** | [`Docs/Images/`](Docs/Images) — robots · electronics · mechanical · diagrams · team |
+
+<p align="center">
+  <a href="Docs/RoboCup_Internationals_Poster.png"><img src="Docs/RoboCup_Internationals_Poster.png" alt="RoboCup Internationals 2025-26 poster" width="340"></a>
+</p>
+
 ## Team
 
 | Member | Roles |
@@ -39,6 +58,10 @@ is made against those facts — score in the goal, never cross the line, stay le
 | **Darsh Goel** | Mechanical & CAD |
 
 Region: **India** · League: **RoboCupJunior Soccer Infrared**
+
+<p align="center">
+  <img src="Docs/Images/Team/Team_Photo.jpg" alt="Team VVS Ballers" width="520">
+</p>
 
 ## The robots at a glance
 
@@ -75,6 +98,16 @@ Wiring for every board is in **[`PCB/Wiring/`](PCB/Wiring)** (one PDF per board)
 explained in [How the robot works](Docs/HOW_IT_WORKS.md). A whole-robot
 [electronics block diagram](Docs/VVS_Ballers_Electronics_Block_Diagram.png) and the
 full [bill of materials](Docs/VVS_Ballers_BOM.xlsx) live in `Docs/`.
+
+<p align="center">
+  <img src="Docs/Images/Electronics/Main_PCB_2.0.png" alt="Main PCB 2.0" width="19%">
+  <img src="Docs/Images/Electronics/IR_PCB.png" alt="IR ring PCB" width="19%">
+  <img src="Docs/Images/Electronics/Line_PCB.png" alt="Line ring PCB" width="19%">
+  <img src="Docs/Images/Electronics/Power_PCB.png" alt="Power PCB" width="19%">
+  <img src="Docs/Images/Electronics/Ultrasonic_PCB.png" alt="Ultrasonic PCB" width="19%">
+</p>
+<p align="center"><i>The five boards — Main 2.0 · IR ring · Line ring · Power · Ultrasonic
+(KiCad renders; build photos in <a href="Docs/Images/Electronics">Docs/Images/Electronics</a>)</i></p>
 
 ## How it plays — design choices vs. the game
 
@@ -124,9 +157,12 @@ RoboCup Internationals 2025-26/
 ├─ Docs/
 │  ├─ HOW_IT_WORKS.md         ← full technical deep-dive
 │  ├─ MAPPING.md              ← original → new file/folder mapping
+│  ├─ TDP.pdf                 ← Team Description Paper
+│  ├─ RoboCup_Internationals_Poster.png
+│  ├─ VVS_Ballers_GroupInterview_Deck.pptx
 │  ├─ VVS_Ballers_BOM.xlsx    ← bill of materials
 │  ├─ VVS_Ballers_Electronics_Block_Diagram.png
-│  └─ Images/
+│  └─ Images/                 ← gallery: Robots · Electronics · Mechanical · Diagrams · Team
 ├─ Firmware/                  ← all microcontroller code
 │  ├─ Attacker/               ← main-board attacker (current: …_Line)
 │  ├─ Defender/               ← main-board goalkeeper (Defender_Full)
@@ -167,13 +203,15 @@ PlatformIO example: `pio run -e teensy41 -t upload` (Teensy) or
 
 ## Inter-board links (summary)
 
-Three independent UART links, each a short binary frame with a 2-byte sync and an
-identical **CRC-8 (poly 0x07)**, so the main board can reject any corrupted frame:
+Three of the four links are short binary frames with a 2-byte sync and an identical
+**CRC-8 (poly 0x07)**, so the main board can reject any corrupted frame; the IR link
+is plain delimited ASCII:
 
-- **IR → Main** (Serial4): ASCII `"<dir>a … <dist>b"`, `500` = no ball.
+- **IR → Main** (Serial4): ASCII `"<dir>a … <dist>b"`, `500` = no ball (no checksum).
 - **Ultrasonic → Main** (Serial3): 13-byte frame, four `uint16` mm distances + status.
 - **Line → Main** (Serial8): 9-byte frame, per-side white-line bitmask + counts.
-- **Camera → Main** (Serial2): 9-byte frame, goal/keeper flags + bearings + open-corner angle.
+- **Camera → Main** (Serial2): 11-byte frame, goal/keeper/ball flags + bearings,
+  open-corner angle, and the orange-ball bearing/distance (camera+IR fusion).
 
 Full byte-level layouts are in [How the robot works](Docs/HOW_IT_WORKS.md).
 

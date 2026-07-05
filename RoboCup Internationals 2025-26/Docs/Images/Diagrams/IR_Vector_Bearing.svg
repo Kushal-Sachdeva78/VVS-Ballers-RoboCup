@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 780" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<rect width="940" height="780" fill="#FFFFFF"/>
+<text x="40" y="52" font-size="30" font-weight="800" fill="#1F2937" text-anchor="start">IR Ball Tracking — Intensity-Weighted Vector Sum</text><text x="40" y="80" font-size="15.5" font-weight="400" fill="#475569" text-anchor="start">16× TSSP58038 ring · each lit sensor contributes a vector → one smooth bearing</text>
+<circle cx="400" cy="430" r="165" fill="#EEF2F6" stroke="#CBD5E1" stroke-width="2"/>
+<circle cx="400" cy="430" r="6" fill="#1F2937"/>
+<circle cx="565.0" cy="430.0" r="7" fill="#E08A2B" stroke="#fff" stroke-width="1.5"/>
+<line x1="400.0" y1="430.0" x2="441.4" y2="430.0" stroke="#F0B57A" stroke-width="3" stroke-linecap="round"/><polygon points="450.4,430.0 441.4,434.7 441.4,425.3" fill="#F0B57A"/>
+<circle cx="552.4" cy="366.9" r="7" fill="#E08A2B" stroke="#fff" stroke-width="1.5"/>
+<line x1="400.0" y1="430.0" x2="463.5" y2="403.7" stroke="#F0B57A" stroke-width="3" stroke-linecap="round"/><polygon points="471.9,400.2 465.3,408.0 461.7,399.4" fill="#F0B57A"/>
+<circle cx="516.7" cy="313.3" r="7" fill="#E08A2B" stroke="#fff" stroke-width="1.5"/>
+<line x1="400.0" y1="430.0" x2="467.7" y2="362.3" stroke="#F0B57A" stroke-width="3" stroke-linecap="round"/><polygon points="474.1,355.9 471.0,365.6 464.4,359.0" fill="#F0B57A"/>
+<circle cx="463.1" cy="277.6" r="7" fill="#E08A2B" stroke="#fff" stroke-width="1.5"/>
+<line x1="400.0" y1="430.0" x2="437.6" y2="339.3" stroke="#F0B57A" stroke-width="3" stroke-linecap="round"/><polygon points="441.0,331.0 441.9,341.1 433.2,337.5" fill="#F0B57A"/>
+<circle cx="400.0" cy="265.0" r="7" fill="#E08A2B" stroke="#fff" stroke-width="1.5"/>
+<line x1="400.0" y1="430.0" x2="400.0" y2="356.3" stroke="#F0B57A" stroke-width="3" stroke-linecap="round"/><polygon points="400.0,347.3 404.7,356.3 395.3,356.3" fill="#F0B57A"/>
+<circle cx="336.9" cy="277.6" r="7" fill="#E08A2B" stroke="#fff" stroke-width="1.5"/>
+<line x1="400.0" y1="430.0" x2="382.9" y2="388.7" stroke="#F0B57A" stroke-width="3" stroke-linecap="round"/><polygon points="379.4,380.4 387.2,386.9 378.6,390.5" fill="#F0B57A"/>
+<circle cx="283.3" cy="313.3" r="7" fill="#B8C2CE" stroke="#fff" stroke-width="1.5"/>
+<circle cx="247.6" cy="366.9" r="7" fill="#B8C2CE" stroke="#fff" stroke-width="1.5"/>
+<circle cx="235.0" cy="430.0" r="7" fill="#B8C2CE" stroke="#fff" stroke-width="1.5"/>
+<circle cx="247.6" cy="493.1" r="7" fill="#B8C2CE" stroke="#fff" stroke-width="1.5"/>
+<circle cx="283.3" cy="546.7" r="7" fill="#B8C2CE" stroke="#fff" stroke-width="1.5"/>
+<circle cx="336.9" cy="582.4" r="7" fill="#B8C2CE" stroke="#fff" stroke-width="1.5"/>
+<circle cx="400.0" cy="595.0" r="7" fill="#B8C2CE" stroke="#fff" stroke-width="1.5"/>
+<circle cx="463.1" cy="582.4" r="7" fill="#B8C2CE" stroke="#fff" stroke-width="1.5"/>
+<circle cx="516.7" cy="546.7" r="7" fill="#B8C2CE" stroke="#fff" stroke-width="1.5"/>
+<circle cx="552.4" cy="493.1" r="7" fill="#B8C2CE" stroke="#fff" stroke-width="1.5"/>
+<line x1="400.0" y1="430.0" x2="529.8" y2="223.4" stroke="#C0504D" stroke-width="6" stroke-linecap="round"/><polygon points="538.3,209.8 536.8,227.8 522.7,218.9" fill="#C0504D"/>
+<circle cx="566.9" cy="162.9" r="20" fill="#F08A24" stroke="#B5651D" stroke-width="2"/>
+<text x="566.9245682334596" y="134.86484971072582" font-size="13" font-weight="700" fill="#B5651D" text-anchor="middle">IR ball</text>
+<text x="546.268486129371" y="203.8141109346652" font-size="13.5" font-weight="700" fill="#C0504D" text-anchor="start">bearing</text>
+<rect x="640" y="150" width="260" height="150" rx="10" ry="10" fill="#F5F7F9" stroke="#CBD5E1" stroke-width="1.5"/>
+<text x="658" y="182" font-size="15" font-weight="700" fill="#1F2937" text-anchor="start">Per sensor</text>
+<text x="658" y="208" font-size="13" font-weight="400" fill="#475569" text-anchor="start">weight w = baseline − raw</text>
+<text x="658" y="232" font-size="13" font-weight="400" fill="#475569" text-anchor="start">(ambient rejected, lone</text>
+<text x="658" y="250" font-size="13" font-weight="400" fill="#475569" text-anchor="start">spikes damped)</text>
+<circle cx="664" cy="278" r="6" fill="#E08A2B"/>
+<text x="678" y="283" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">lit</text>
+<circle cx="736" cy="278" r="6" fill="#B8C2CE"/>
+<text x="750" y="283" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">unlit sensor</text>
+<rect x="640" y="330" width="260" height="120" rx="10" ry="10" fill="#FFF8EE" stroke="#EAD6B8" stroke-width="1.5"/>
+<text x="770" y="360" font-size="14" font-weight="700" fill="#1F2937" text-anchor="middle">Bearing</text>
+<text x="770" y="392" font-size="15" font-weight="700" fill="#9A6A1E" text-anchor="middle">= atan2( Σ w·sinθ ,</text>
+<text x="770" y="416" font-size="15" font-weight="700" fill="#9A6A1E" text-anchor="middle">Σ w·cosθ )</text>
+<text x="770" y="438" font-size="11.5" font-weight="400" fill="#475569" text-anchor="middle">over all lit sensors</text>
+<rect x="640" y="478" width="260" height="118" rx="10" ry="10" fill="#F5F7F9" stroke="#CBD5E1" stroke-width="1.5"/>
+<text x="658" y="508" font-size="15" font-weight="700" fill="#1F2937" text-anchor="start">Smoothing &amp; output</text>
+<text x="658" y="533" font-size="13" font-weight="400" fill="#475569" text-anchor="start">· hysteresis 60 / 35</text>
+<text x="658" y="555" font-size="13" font-weight="400" fill="#475569" text-anchor="start">· EWMA filtered bearing</text>
+<text x="658" y="577" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">· sends  dir a  dist b  (500 = no ball)</text>
+<text x="400" y="635" font-size="12.5" font-weight="400" fill="#475569" text-anchor="middle">intensity-weighted contribution vectors (length ∝ signal strength)</text>
+</svg>

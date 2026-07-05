@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1020 680" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<rect width="1020" height="680" fill="#FFFFFF"/>
+<text x="40" y="52" font-size="30" font-weight="800" fill="#1F2937" text-anchor="start">Two-Robot Strategy — Attacker + Defender</text><text x="40" y="80" font-size="15.5" font-weight="400" fill="#475569" text-anchor="start">the attacker drives straight at the ball and scores; the defender holds its line between ball and goal</text>
+<rect x="90" y="120" width="840" height="420" rx="6" fill="#3C9A4E" stroke="#2C7A3D" stroke-width="3"/>
+<rect x="108" y="138" width="804" height="384" fill="none" stroke="#FFFFFF" stroke-width="3"/>
+<line x1="510.0" y1="138" x2="510.0" y2="522" stroke="#fff" stroke-width="3"/>
+<circle cx="510.0" cy="330.0" r="58" fill="none" stroke="#fff" stroke-width="3"/>
+<rect x="68" y="255.0" width="22" height="150" fill="#2F7DC4"/>
+<rect x="930" y="255.0" width="22" height="150" fill="#E0A82B"/>
+<text x="62" y="247.0" font-size="12.5" font-weight="700" fill="#2F7DC4" text-anchor="start">our goal</text>
+<text x="958" y="247.0" font-size="12.5" font-weight="700" fill="#A87B16" text-anchor="end">attacking</text>
+<circle cx="443" cy="288" r="15" fill="#F08A24" stroke="#B5651D" stroke-width="2"/>
+<circle cx="644" cy="364" r="30" fill="#C0504D" stroke="#fff" stroke-width="3"/>
+<text x="644.4" y="369.6" font-size="20" font-weight="800" fill="#fff" text-anchor="middle">A</text>
+<line x1="622.4" y1="349.6" x2="469.2" y2="301.9" stroke="#fff" stroke-width="4" stroke-linecap="round"/><polygon points="456.8,298.0 471.2,295.4 467.2,308.3" fill="#fff"/>
+<text x="563.6" y="353.8" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">straight at ball (speed 250), gyro holds heading</text>
+<circle cx="130" cy="313" r="30" fill="#8B5CF6" stroke="#fff" stroke-width="3"/>
+<text x="130" y="319.20000000000005" font-size="20" font-weight="800" fill="#fff" text-anchor="middle">D</text>
+<line x1="130.0" y1="269.2" x2="130.0" y2="164.0" stroke="#fff" stroke-width="3" stroke-linecap="round"/><polygon points="130.0,154.0 135.2,164.0 124.8,164.0" fill="#fff"/>
+<line x1="130.0" y1="357.2" x2="130.0" y2="496.0" stroke="#fff" stroke-width="3" stroke-linecap="round"/><polygon points="130.0,506.0 124.8,496.0 135.2,496.0" fill="#fff"/>
+<text x="170" y="307.20000000000005" font-size="12.5" font-weight="700" fill="#fff" text-anchor="start">lateral PID:</text>
+<text x="170" y="325.20000000000005" font-size="12.5" font-weight="700" fill="#fff" text-anchor="start">stay between</text>
+<text x="170" y="343.20000000000005" font-size="12.5" font-weight="700" fill="#fff" text-anchor="start">ball &amp; goal</text>
+<line x1="443" y1="288" x2="88" y2="330" stroke="#fff" stroke-width="2" stroke-dasharray="4 5" opacity="0.85"/>
+<rect x="90" y="560" width="840" height="86" rx="10" ry="10" fill="#F5F7F9" stroke="#CBD5E1" stroke-width="1.5"/>
+<rect x="90" y="560" width="7" height="86" rx="3" fill="#E08A2B"/>
+<text x="112" y="592" font-size="15.5" font-weight="700" fill="#1F2937" text-anchor="start">Automatic role-switch (2.4 GHz link)</text>
+<text x="112" y="618" font-size="13.5" font-weight="400" fill="#475569" text-anchor="start">If a robot is fouled, penalised or removed, its partner switches to defender — our goal is never left open while we are a robot down.</text>
+<circle cx="680" cy="490" r="9" fill="#C0504D"/>
+<text x="696" y="495" font-size="12.5" font-weight="700" fill="#fff" text-anchor="start">Attacker</text>
+<circle cx="680" cy="514" r="9" fill="#8B5CF6"/>
+<text x="696" y="519" font-size="12.5" font-weight="700" fill="#fff" text-anchor="start">Defender</text>
+<circle cx="800" cy="490" r="9" fill="#F08A24"/>
+<text x="816" y="495" font-size="12.5" font-weight="700" fill="#fff" text-anchor="start">Ball</text>
+</svg>
