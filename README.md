@@ -144,9 +144,6 @@ Full byte-level layouts are in the
 
 Region: **India** · League: **RoboCupJunior Soccer Infrared**
 
-Earlier seasons (2024-25) also featured teammates **Shlok Karthik** and **Akshaj Gupta**
-(see the [2024-25 TDP](RoboCup%202024-25/RoboCup%20Internationals%202024-25/RoboCup%20Internationals%20TDP.md)).
-
 ## Sponsors
 
 Our thanks to **Amazon · DLF · Havells · OpenMV · Magnum Ventures · Budtree
