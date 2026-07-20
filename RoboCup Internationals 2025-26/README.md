@@ -39,7 +39,7 @@ is made against those facts — score in the goal, never cross the line, stay le
 
 | | |
 |---|---|
-| 📄 **Team Description Paper** | [`Docs/TDP.pdf`](Docs/TDP.pdf) |
+| 📄 **Team Description Paper** | [`Docs/TDP.md`](Docs/TDP.md) |
 | 🎬 **TDP video** | [Watch / download](https://github.com/Kushal-Sachdeva78/VVS-Ballers-RoboCup/releases/download/internationals-2025-26-media/VVS_Ballers_TDP_Video.mp4) (154 MB, hosted under [Releases](https://github.com/Kushal-Sachdeva78/VVS-Ballers-RoboCup/releases)) |
 | 🖼️ **Poster** | [`Docs/RoboCup_Internationals_Poster.png`](Docs/RoboCup_Internationals_Poster.png) |
 | 🎤 **Group-interview deck** | [`Docs/VVS_Ballers_GroupInterview_Deck.pptx`](Docs/VVS_Ballers_GroupInterview_Deck.pptx) |
@@ -157,7 +157,8 @@ RoboCup Internationals 2025-26/
 ├─ Docs/
 │  ├─ HOW_IT_WORKS.md         ← full technical deep-dive
 │  ├─ MAPPING.md              ← original → new file/folder mapping
-│  ├─ TDP.pdf                 ← Team Description Paper
+│  ├─ TDP.md                  ← Team Description Paper (Markdown)
+│  ├─ TDP_images/             ← images embedded in TDP.md
 │  ├─ RoboCup_Internationals_Poster.png
 │  ├─ VVS_Ballers_GroupInterview_Deck.pptx
 │  ├─ VVS_Ballers_BOM.xlsx    ← bill of materials

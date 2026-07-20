@@ -42,7 +42,7 @@
 > page focuses on them. The full detail lives in that folder's
 > **[detailed README](RoboCup%20Internationals%202025-26/README.md)** and a complete
 > **[technical deep-dive](RoboCup%20Internationals%202025-26/Docs/HOW_IT_WORKS.md)**.
-> Competition media: **[TDP](RoboCup%20Internationals%202025-26/Docs/TDP.pdf)** ·
+> Competition media: **[TDP](RoboCup%20Internationals%202025-26/Docs/TDP.md)** ·
 > **[poster](RoboCup%20Internationals%202025-26/Docs/RoboCup_Internationals_Poster.png)** ·
 > **[TDP video](https://github.com/Kushal-Sachdeva78/VVS-Ballers-RoboCup/releases/download/internationals-2025-26-media/VVS_Ballers_TDP_Video.mp4)** ·
 > **[photo gallery](RoboCup%20Internationals%202025-26/Docs/Images)**.
