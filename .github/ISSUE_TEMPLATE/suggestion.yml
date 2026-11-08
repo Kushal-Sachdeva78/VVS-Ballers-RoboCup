@@ -1,0 +1,11 @@
+name: "Suggestion or question"
+description: "An idea, a build question or a request for more detail"
+title: "[question] "
+labels: ["question"]
+body:
+  - type: textarea
+    id: text
+    attributes:
+      label: "Your suggestion or question"
+    validations:
+      required: true
