@@ -8,12 +8,18 @@
   Autonomous RoboCupJunior Soccer robots by Team VVS Ballers, designed and iterated
   across multiple seasons, from EV3 regional robots to a custom Teensy-based
   international platform.<br>
-  Firmware (C++) · multi-board electronics (KiCad) · mechanical design (Fusion 360).
+  Firmware (C++) · multi-board electronics (KiCad) · mechanical design (Fusion 360).<br>
+  For RoboCupJunior teams building their own robots.
 </p>
 
 <p align="center">
   <img src="RoboCup%20Internationals%202025-26/Docs/Images/Robots/Both_Robots.jpg" alt="The two Internationals 2025-26 robots with the IR ball" width="760">
 </p>
+
+```bash
+git clone https://github.com/Kushal-Sachdeva78/VVS-Ballers-RoboCup
+```
+<!-- DEMO: cut a 5-10 s GIF from "RoboCup Nationals 2025-26/Gallery/Finals Video.mp4", save as docs/demo.gif, then replace this line with ![robots playing](docs/demo.gif) -->
 
 ---
 
