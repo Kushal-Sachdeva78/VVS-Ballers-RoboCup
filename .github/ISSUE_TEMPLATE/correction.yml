@@ -1,0 +1,22 @@
+name: "Correction or problem"
+description: "Something in the docs, code or files is wrong or missing"
+title: "[fix] "
+labels: ["documentation"]
+body:
+  - type: input
+    id: where
+    attributes:
+      label: "File or folder"
+      placeholder: "RoboCup Internationals 2025-26/Docs"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: "What is wrong or missing"
+    validations:
+      required: true
+  - type: textarea
+    id: fix
+    attributes:
+      label: "Suggested fix"
